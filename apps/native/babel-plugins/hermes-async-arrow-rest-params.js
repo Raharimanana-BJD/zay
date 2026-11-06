@@ -9,7 +9,9 @@ module.exports = function hermesAsyncArrowRestParams({ types: t }) {
     visitor: {
       ArrowFunctionExpression(path) {
         const { node } = path;
-        if (!node.async || !node.params.some((param) => t.isRestElement(param))) {
+        if (
+          !(node.async && node.params.some((param) => t.isRestElement(param)))
+        ) {
           return;
         }
 
@@ -19,7 +21,11 @@ module.exports = function hermesAsyncArrowRestParams({ types: t }) {
         // a parameter, so defaults still resolve in the parameter scope and a
         // failure while binding them rejects the returned promise.
         const args = path.scope.generateUidIdentifier("args");
-        const inner = t.arrowFunctionExpression([t.arrayPattern(node.params)], node.body, true);
+        const inner = t.arrowFunctionExpression(
+          [t.arrayPattern(node.params)],
+          node.body,
+          true
+        );
 
         node.async = false;
         node.params = [t.restElement(t.cloneNode(args))];

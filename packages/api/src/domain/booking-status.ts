@@ -5,7 +5,7 @@ import { and, eq } from "drizzle-orm";
 
 export type BookingStatus = typeof booking.$inferSelect.status;
 type BookingEvent = typeof bookingEvent.$inferSelect;
-type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 const statusChanged = () =>
   new TRPCError({ code: "CONFLICT", message: "BOOKING_STATUS_CHANGED" });
@@ -38,6 +38,7 @@ export interface TransitionInput {
   };
   bookingId: string;
   clientRequestId?: string | null;
+  data?: Record<string, unknown>;
   eventType: string;
   reasonCode?: string | null;
   reasonNote?: string | null;
@@ -112,6 +113,7 @@ export async function transitionBooking(
       actorId: actor.actorId,
       reasonCode: input.reasonCode ?? null,
       reasonNote: input.reasonNote ?? null,
+      data: input.data ?? null,
       clientRequestId: clientRequestId ?? null,
       createdAt: now,
     })

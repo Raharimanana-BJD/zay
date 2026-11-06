@@ -3,6 +3,7 @@
 
 export const BOOKING_EVENT_TYPES = [
   "status_changed",
+  "booking_created",
   "driver_assigned",
   "driver_replaced",
   "destination_requested",

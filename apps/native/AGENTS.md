@@ -2,16 +2,20 @@
 
 ## Overview
 
-The single Zay mobile app, built with Expo and React Native, for both clients and drivers. The demo targets Android. The screens in `app/` are still the starter screens, and scope feature 3 replaces them.
+The single Zay mobile app, built with Expo and React Native, for both clients and drivers. The demo targets Android. Spec 0003 records the mobile decisions, and it is still `Assumed` until `/architect` ratifies it.
 
 ## Key files
 
 | File | Owns |
 |---|---|
-| `app/` | Expo Router routes, one file per screen |
+| `app/` | Expo Router routes, one group per space: `(auth)`, `(client)`, `(driver)` |
 | `lib/auth-client.ts` | Better Auth client, stores the session in SecureStore |
 | `utils/trpc.ts` | tRPC client and the shared `queryClient` |
-| `contexts/app-theme-context.tsx` | Light and dark theme state |
+| `components/ui.tsx` | Base components of the app |
+| `components/zay-map.tsx` | The map: Leaflet inside a WebView |
+| `lib/i18n/` | French and Malagasy dictionaries, and `useI18n` |
+| `lib/use-action.ts` | Sends a sensitive action with a request id, so a retry does not act twice |
+| `lib/driver-location.ts` | Sends the driver position to the server |
 | `app.json` | Expo config: scheme, Android package, plugins |
 | `babel-plugins/hermes-async-arrow-rest-params.js` | Temporary Hermes workaround |
 
@@ -29,6 +33,9 @@ bun run check-types
 
 - Build UI with HeroUI Native and Uniwind. This app does not use `packages/ui`, which is for the web only.
 - Import app files through the `@/` alias.
+- Put every visible text in both `lib/i18n/fr.ts` and `lib/i18n/mg.ts`. Server error codes are shown through `errors.<CODE>` keys.
+- Send sensitive actions through `useAction`.
+- The app is light theme only, and screens read the server again every 3 seconds. There are no push notifications yet.
 - Change native settings in `app.json`. The `android/` and `ios/` folders are generated and ignored by git, so edits made there are lost.
 - Client env values must be public and start with `EXPO_PUBLIC_`. Declare them in `.env.schema`.
 
@@ -39,6 +46,7 @@ bun run check-types
 - If the `scheme` in `app.json` changes, update `trustedOrigins` in `packages/auth/src/index.ts` too.
 - `com.anonymous.zayapp` in `app.json` is still a placeholder package name.
 - There is no `eas.json` yet, so EAS builds are not set up.
+- The map loads Leaflet and its tiles from the internet, so it stays empty without a network.
 - Remove the Hermes Babel plugin once the issue linked at the top of that file is fixed.
 
 ## Agent skills

@@ -8,9 +8,11 @@ The tRPC layer, where Zay's business rules live. The server mounts it, and the w
 
 | File | Owns |
 |---|---|
-| `src/index.ts` | tRPC setup: `router`, `publicProcedure`, `protectedProcedure` |
-| `src/context.ts` | The `Context` type: `session` and `db` |
+| `src/index.ts` | tRPC setup: `router` and the public, protected, staff, admin, client and driver procedures |
+| `src/context.ts` | The `Context` type: `session`, `db`, `auth`, `headers` and `files` |
 | `src/routers/index.ts` | `appRouter` and the `AppRouter` type |
+| `src/routers/` | `client`, `driver`, `me`, and `admin/` for the team |
+| `src/domain/` | Business rules: `dispatch`, `offers`, `rides`, `trip`, `booking-status`, and the codes in `codes.ts` |
 
 ## Conventions
 
@@ -19,6 +21,6 @@ The tRPC layer, where Zay's business rules live. The server mounts it, and the w
 
 ## Gotchas
 
-- `protectedProcedure` only checks that a user is signed in. It does not check roles yet, so client, driver and admin access still has to be added (scope features 3 and 26).
+- `protectedProcedure` only checks that a user is signed in. Use `clientProcedure`, `driverProcedure`, `staffProcedure` or `adminProcedure` for anything tied to a role.
 
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._

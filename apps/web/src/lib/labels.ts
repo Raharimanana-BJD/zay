@@ -119,6 +119,7 @@ export const BOOKING_EVENT_LABELS: Record<
   (typeof BOOKING_EVENT_TYPES)[number],
   string
 > = {
+  booking_created: "Demande créée",
   status_changed: "Changement de statut",
   driver_assigned: "Chauffeur attribué",
   driver_replaced: "Chauffeur remplacé",
