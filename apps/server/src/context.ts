@@ -1,19 +1,23 @@
 import type { Context as ApiContext } from "@zay-app/api/context";
 import type { Context as HonoContext } from "hono";
 
-import { db } from "./services";
-import { auth } from "./services";
+import { files } from "./files";
+import { auth, db } from "./services";
 
 export type CreateContextOptions = {
   context: HonoContext;
 };
 
-export async function createContext({ context }: CreateContextOptions): Promise<ApiContext> {
-  const session = await auth.api.getSession({
-    headers: context.req.raw.headers,
-  });
+export async function createContext({
+  context,
+}: CreateContextOptions): Promise<ApiContext> {
+  const { headers } = context.req.raw;
+  const session = await auth.api.getSession({ headers });
   return {
+    auth,
     db,
+    files,
+    headers,
     session,
   };
 }

@@ -73,6 +73,12 @@
       "skillPath": "skills/hono/SKILL.md",
       "computedHash": "f469bac28a53d010bb47bd61109d0cfebe9a4f3fd407310746114549886b5870"
     },
+    "recharts": {
+      "source": "andy-spike/skills",
+      "sourceType": "github",
+      "skillPath": "skills/recharts/SKILL.md",
+      "computedHash": "a34ecf6ee1664a089e800a7cec095e114c6c3e8a11a06d3dfe98a39aac13f70c"
+    },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",

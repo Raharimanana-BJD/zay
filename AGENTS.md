@@ -1,3 +1,86 @@
+# Zay
+
+## Product
+
+Zay is a taxi and tuk-tuk booking platform for Toliara, Madagascar. One mobile app serves both clients and drivers, and the admin team works in a web back office. The plan is in `docs/scope/_root/scope.md`, and the full requirements (in French) are in `cahier_des_charges_plateforme_taxi_toliara.md`.
+
+## Stack
+
+- **Language / Runtime**: TypeScript, Bun
+- **Monorepo**: Turborepo with Bun workspaces
+- **Apps**: `apps/native` (Expo), `apps/web` (TanStack Start), `apps/server` (Hono)
+- **Key dependencies**: tRPC, Drizzle with PostgreSQL, Better Auth, Varlock
+- **Package manager**: Bun
+
+## Build approach
+
+Tracer Bullet (une vraie course marche d'abord de bout en bout, puis chaque tranche renforce ce fil).
+
+## Commands
+
+```bash
+# Install (also generates the env types)
+bun install
+
+# First run: start PostgreSQL, then apply the schema
+bun run db:start
+bun run db:push
+
+# Dev: all apps, or one of them
+bun run dev
+bun run dev:server   # http://localhost:3000
+bun run dev:web      # http://localhost:3001
+bun run dev:native
+
+# Build and type check
+bun run build
+bun run check-types
+
+# Lint and format
+bun run check
+bun run fix
+
+# After changing an .env.schema, or the auth config
+bun run env:generate
+bun run auth:generate
+```
+
+No test runner or CI is set up yet.
+
+## Specs
+
+Stored in `docs/specs/`. Format: `docs/specs/NNNN-title.md`.
+
+## Rules
+
+- Business rules live on the server. Prices, offers, timers and ride status changes are checked there, never only in a client.
+- `apps/web` and `apps/native` reach data through tRPC over HTTP. From `@zay-app/api` they import types only, and they never import `@zay-app/db` or `@zay-app/auth`.
+- Each app owns its env schema in `.env.schema` and reads values through its generated `ENV`. Shared packages never read env values; they receive them, as in `createDb(ENV)` and `createAuth(ENV, db)`.
+- Never edit generated files: `src/env.ts`, `apps/web/src/routeTree.gen.ts`, `packages/db/src/schema/auth.ts`.
+- Packages ship TypeScript source with no build step. Import by full path, for example `@zay-app/api/routers/index`.
+- Dependencies used by several workspaces take their version from the catalog in the root `package.json` (`catalog:`).
+- Bun's automatic env loading is turned off. Run tools that need env values from the owning app, through Varlock.
+- `DESIGN-shopify.md` is not an adopted reference yet. Scope feature 6 decides whether to keep it.
+
+## Agent skills
+
+Skills live in `.agents/skills/`, with links from `.claude/skills/`. Each workspace doc lists its own.
+
+- [turborepo](.agents/skills/turborepo/): `vercel/turborepo`, tasks, caching and monorepo structure
+- [ultracite](.agents/skills/ultracite/): `haydenbleasel/ultracite`, linting and formatting
+
+## Context files
+
+- [apps/native/AGENTS.md](apps/native/AGENTS.md): the Expo mobile app for clients and drivers
+- [apps/server/AGENTS.md](apps/server/AGENTS.md): the Hono API server and its services
+- [apps/web/AGENTS.md](apps/web/AGENTS.md): the TanStack Start web app and back office
+- [packages/api/AGENTS.md](packages/api/AGENTS.md): tRPC routers and business rules
+- [packages/auth/AGENTS.md](packages/auth/AGENTS.md): Better Auth setup
+- [packages/db/AGENTS.md](packages/db/AGENTS.md): Drizzle schema and local PostgreSQL
+- [packages/ui/AGENTS.md](packages/ui/AGENTS.md): shared shadcn/ui components for the web
+
+---
+
 # Ultracite Code Standards
 
 This project uses **Ultracite**, a zero-config preset that enforces strict code quality standards through automated formatting and linting.

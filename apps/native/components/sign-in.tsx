@@ -44,6 +44,8 @@ function getErrorMessage(error: unknown): string | null {
     if (typeof maybeError.message === "string") {
       return maybeError.message;
     }
+    // A form level schema reports its errors keyed by field: { email: [issue] }.
+    return getErrorMessage(Object.values(error));
   }
 
   return null;

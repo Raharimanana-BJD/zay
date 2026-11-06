@@ -17,9 +17,15 @@ import z from "zod";
 import { authClient } from "@/lib/auth-client";
 import { queryClient } from "@/utils/trpc";
 
+const E164_PHONE = /^\+[1-9]\d{7,14}$/;
+
 const signUpSchema = z.object({
   name: z.string().trim().min(1, "Name is required").min(2, "Name must be at least 2 characters"),
   email: z.string().trim().min(1, "Email is required").email("Enter a valid email address"),
+  phone: z
+    .string()
+    .trim()
+    .regex(E164_PHONE, "Use the international format, like +261340000000"),
   password: z.string().min(1, "Password is required").min(8, "Use at least 8 characters"),
 });
 
@@ -45,6 +51,8 @@ function getErrorMessage(error: unknown): string | null {
     if (typeof maybeError.message === "string") {
       return maybeError.message;
     }
+    // A form level schema reports its errors keyed by field: { phone: [issue] }.
+    return getErrorMessage(Object.values(error));
   }
 
   return null;
@@ -52,6 +60,7 @@ function getErrorMessage(error: unknown): string | null {
 
 export function SignUp() {
   const emailInputRef = useRef<InputRef>(null);
+  const phoneInputRef = useRef<InputRef>(null);
   const passwordInputRef = useRef<InputRef>(null);
   const { toast } = useToast();
 
@@ -59,6 +68,7 @@ export function SignUp() {
     defaultValues: {
       name: "",
       email: "",
+      phone: "",
       password: "",
     },
     validators: {
@@ -69,6 +79,7 @@ export function SignUp() {
         {
           name: value.name.trim(),
           email: value.email.trim(),
+          phone: value.phone.trim(),
           password: value.password,
         },
         {
@@ -146,6 +157,29 @@ export function SignUp() {
                         autoCapitalize="none"
                         autoComplete="email"
                         textContentType="emailAddress"
+                        returnKeyType="next"
+                        blurOnSubmit={false}
+                        onSubmitEditing={() => {
+                          phoneInputRef.current?.focus();
+                        }}
+                      />
+                    </TextField>
+                  )}
+                </form.Field>
+
+                <form.Field name="phone">
+                  {(field) => (
+                    <TextField>
+                      <Label>Phone</Label>
+                      <Input
+                        ref={phoneInputRef}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChangeText={field.handleChange}
+                        placeholder="+261340000000"
+                        keyboardType="phone-pad"
+                        autoComplete="tel"
+                        textContentType="telephoneNumber"
                         returnKeyType="next"
                         blurOnSubmit={false}
                         onSubmitEditing={() => {
