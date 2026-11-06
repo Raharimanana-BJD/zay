@@ -22,10 +22,12 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
 CMD ["bun", "run", "start"]
 
 FROM deps AS web
-# Vite writes this address into the browser code, so it is set at build time.
+# Vite writes these values into the browser code, so they are set at build time.
 ARG VITE_SERVER_URL
+ARG VITE_CARTO_API_KEY
 ENV NODE_ENV=production
 ENV VITE_SERVER_URL=$VITE_SERVER_URL
+ENV VITE_CARTO_API_KEY=$VITE_CARTO_API_KEY
 WORKDIR /app/apps/web
 RUN bun run build
 USER bun
