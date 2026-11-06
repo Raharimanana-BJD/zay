@@ -1,17 +1,20 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import {
+  createRootRouteWithContext,
+  HeadContent,
+  Outlet,
+  Scripts,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import type { AppRouter } from "@zay-app/api/routers/index";
 import { Toaster } from "@zay-app/ui/components/sonner";
 
-import Header from "../components/header";
-
 import appCss from "../index.css?url";
 export interface RouterAppContext {
-  trpc: TRPCOptionsProxy<AppRouter>;
   queryClient: QueryClient;
+  trpc: TRPCOptionsProxy<AppRouter>;
 }
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
@@ -25,13 +28,18 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "My App",
+        title: "Zay Admin",
       },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "icon",
+        type: "image/png",
+        href: "/favicon.png",
       },
     ],
   }),
@@ -41,18 +49,22 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootDocument() {
   return (
-    <html lang="en" className="dark">
+    <html lang="fr">
       <head>
         <HeadContent />
       </head>
       <body>
-        <div className="grid h-svh grid-rows-[auto_1fr]">
-          <Header />
-          <Outlet />
-        </div>
-        <Toaster richColors />
-        <TanStackRouterDevtools position="bottom-left" />
-        <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
+        <Outlet />
+        <Toaster theme="light" />
+        {import.meta.env.DEV ? (
+          <>
+            <TanStackRouterDevtools position="bottom-left" />
+            <ReactQueryDevtools
+              buttonPosition="bottom-right"
+              position="bottom"
+            />
+          </>
+        ) : null}
         <Scripts />
       </body>
     </html>

@@ -13,6 +13,7 @@
     "@trpc/server": "catalog:",
     "@zay-app/auth": "workspace:*",
     "@zay-app/db": "workspace:*",
+    "drizzle-orm": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

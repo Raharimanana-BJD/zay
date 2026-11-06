@@ -2,21 +2,29 @@ name: zay-app
 
 services:
   postgres:
-    image: postgres:18
+    image: postgis/postgis:17-3.6-alpine
     container_name: zay-app-postgres
     environment:
       POSTGRES_DB: zay-app
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
-      - zay-app_postgres_data:/var/lib/postgresql
+      - zay-app_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: zay-app-mailpit
+    ports:
+      - "1026:1025" # SMTP
+      - "8026:8025" # Web UI
     restart: unless-stopped
 
 volumes:

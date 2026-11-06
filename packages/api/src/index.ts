@@ -1,6 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 
 import type { Context } from "./context";
+import { isStaffRole } from "./domain/staff";
 
 export const t = initTRPC.context<Context>().create();
 
@@ -22,4 +23,19 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
       session: ctx.session,
     },
   });
+});
+
+/** Admin and support. The role is read from the database on every request. */
+export const staffProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!isStaffRole(ctx.session.user.role)) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+  return next();
+});
+
+export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.session.user.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+  return next();
 });

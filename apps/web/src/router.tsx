@@ -1,31 +1,21 @@
-import { QueryCache, QueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import type { AppRouter } from "@zay-app/api/routers/index";
-import { toast } from "sonner";
 
 import Loader from "./components/loader";
+import NotFound from "./components/not-found";
+import RouteError from "./components/route-error";
 import { ENV } from "./env";
 import { routeTree } from "./routeTree.gen";
 import { TRPCProvider } from "./utils/trpc";
 
 function createQueryClient() {
+  // Every screen shows its own error state, with its own retry button.
   return new QueryClient({
-    queryCache: new QueryCache({
-      onError: (error, query) => {
-        toast.error(error.message, {
-          action: {
-            label: "retry",
-            onClick: () => {
-              query.invalidate();
-            },
-          },
-        });
-      },
-    }),
-    defaultOptions: { queries: { staleTime: 60 * 1000 } },
+    defaultOptions: { queries: { staleTime: 60 * 1000, retry: 1 } },
   });
 }
 
@@ -56,9 +46,10 @@ export const getRouter = () => {
     defaultPreloadStaleTime: 0,
     context: { trpc, queryClient },
     defaultPendingComponent: () => <Loader />,
-    defaultNotFoundComponent: () => <div>Not Found</div>,
+    defaultNotFoundComponent: NotFound,
+    defaultErrorComponent: RouteError,
     Wrap: ({ children }) => (
-      <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
+      <TRPCProvider queryClient={queryClient} trpcClient={trpcClient}>
         {children}
       </TRPCProvider>
     ),

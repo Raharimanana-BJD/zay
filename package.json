@@ -20,7 +20,8 @@
       "@trpc/client": "^11.19.0",
       "@tanstack/react-form": "^1.33.5",
       "@better-auth/expo": "1.7.12",
-      "drizzle-orm": "1.0.0-rc.5"
+      "drizzle-orm": "1.0.0-rc.5",
+      "recharts": "3.8.0"
     }
   },
   "type": "module",
@@ -42,6 +43,9 @@
     "env:generate": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./apps/native/ && varlock codegen --path ./packages/db/",
     "postinstall": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./apps/native/ && varlock codegen --path ./packages/db/",
     "auth:generate": "cd apps/server && bun run auth:generate",
+    "db:verify": "cd apps/server && bun run db:verify",
+    "admin:create": "cd apps/server && bun run admin:create",
+    "seed:backoffice": "cd apps/server && bun run seed:backoffice",
     "check": "ultracite check",
     "fix": "ultracite fix"
   },
