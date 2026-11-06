@@ -25,29 +25,29 @@ _Ce sont des recommandations pour garder une construction ordonnée, pas des obl
 | A | Socle du projet | Foundation | existing |
 | 1 | Normes et contexte du projet | Foundation | planned |
 | 2 | Modèle de données | Foundation | in-progress |
-| 3 | Application unique à deux rôles | Foundation | planned |
-| 4 | Temps réel et notifications | Foundation | planned |
-| 5 | Carte et itinéraires | Foundation | planned |
-| 6 | Design system | Foundation | planned |
-| 7 | Français et malagasy | Foundation | planned |
+| 3 | Application unique à deux rôles | Foundation | in-progress |
+| 4 | Temps réel et notifications | Foundation | in-progress |
+| 5 | Carte et itinéraires | Foundation | in-progress |
+| 6 | Design system | Foundation | in-progress |
+| 7 | Français et malagasy | Foundation | in-progress |
 | 8 | Mise en ligne de la démo | Foundation | planned |
-| 9 | Première course complète | Slice 1 | planned |
+| 9 | Première course complète | Slice 1 | in-progress |
 | 10 | Simulateur de chauffeurs | Slice 2 | planned |
-| 11 | Distribution par groupes | Slice 3 | planned |
-| 12 | Comparaison et attribution | Slice 3 | planned |
-| 13 | Négociation encadrée | Slice 3 | planned |
-| 14 | Catégories et capacité | Slice 4 | planned |
-| 15 | Lieux et zones | Slice 4 | planned |
-| 16 | Suivi du chauffeur | Slice 5 | planned |
-| 17 | Annulations et incidents | Slice 5 | planned |
-| 18 | Changement de destination | Slice 5 | planned |
-| 19 | Paiement en espèces | Slice 5 | planned |
-| 20 | Historique et revenus | Slice 5 | planned |
-| 21 | Connexion instable | Slice 5 | planned |
-| 22 | Dossier chauffeur et véhicules | Slice 6 | planned |
-| 30 | Socle de l'espace admin | Slice 6 | in-progress |
+| 11 | Distribution par groupes | Slice 3 | in-progress |
+| 12 | Comparaison et attribution | Slice 3 | in-progress |
+| 13 | Négociation encadrée | Slice 3 | in-progress |
+| 14 | Catégories et capacité | Slice 4 | in-progress |
+| 15 | Lieux et zones | Slice 4 | in-progress |
+| 16 | Suivi du chauffeur | Slice 5 | in-progress |
+| 17 | Annulations et incidents | Slice 5 | in-progress |
+| 18 | Changement de destination | Slice 5 | in-progress |
+| 19 | Paiement en espèces | Slice 5 | in-progress |
+| 20 | Historique et revenus | Slice 5 | in-progress |
+| 21 | Connexion instable | Slice 5 | in-progress |
+| 22 | Dossier chauffeur et véhicules | Slice 6 | in-progress |
+| 30 | Socle de l'espace admin | Slice 6 | done |
 | 23 | Validation des dossiers | Slice 6 | in-progress |
-| 24 | Supervision et signalements | Slice 7 | in-progress |
+| 24 | Supervision et signalements | Slice 7 | done |
 | 25 | Réglages de tarifs et de distribution | Slice 7 | in-progress |
 | 26 | Comptes et rôles d'accès | Slice 7 | in-progress |
 | 27 | Statistiques essentielles | Slice 7 | in-progress |
@@ -79,30 +79,52 @@ spec [0001](../../specs/_root/0001-modele-donnees/index.md) · code in `packages
 - [x] Verify it: `/check verify modèle de données`
 - [ ] Test it: `/test modèle de données`
 
-### 3. Application unique à deux rôles · needs a decision
+### 3. Application unique à deux rôles · in-progress
 Une même application pour le client et le chauffeur, avec ses espaces, sa navigation et le choix du rôle à l'inscription. Elle remplace les écrans de départ du projet.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `apps/native/app/`, `packages/api/src/routers/driver.ts`, `packages/api/src/index.ts`
 **Done when:** après connexion, un client et un chauffeur arrivent chacun dans leur espace, et un rôle ne peut pas ouvrir les écrans ni appeler les actions de l'autre.
 - [ ] Design it (spec): `/architect application unique à deux rôles`
+- [x] Build it: `/develop application mobile`
+  - [x] Inscription, rôle et espaces fermés côté serveur et côté écrans
+- [ ] Verify it: `/check verify application mobile`
 
-### 4. Temps réel et notifications · needs a decision
+### 4. Temps réel et notifications · in-progress
 Comment demandes, offres et statuts arrivent sur les téléphones, y compris quand l'application est en arrière plan et sur un réseau faible.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `packages/api/src/domain/dispatch.ts`, `apps/server/src/dispatcher.ts`, `apps/native/utils/trpc.ts`
 **Done when:** un événement du serveur atteint le bon téléphone en quelques secondes, et une notification en retard ne permet jamais d'agir sur une offre expirée.
 - [ ] Design it (spec): `/architect temps réel et notifications`
+- [ ] Build it: `/develop application mobile`
+  - [x] Lecture toutes les 3 s, reprise après coupure, expirations serveur
+  - [ ] Notifications en arrière plan : pas construites, il faut un projet Firebase
+- [ ] Verify it: `/check verify application mobile`
 
-### 5. Carte et itinéraires · needs a decision
+### 5. Carte et itinéraires · in-progress
 Afficher une carte de Toliara, placer un point, et obtenir une distance d'itinéraire. Le tarif en dépend.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `packages/api/src/domain/trip.ts`, `apps/native/components/zay-map.tsx`, `place-picker.tsx`
 **Done when:** on peut placer départ et destination sur une carte de Toliara et obtenir une distance, avec un calcul de secours si le service de carte échoue.
 - [ ] Design it (spec): `/architect carte et itinéraires`
+- [x] Build it: `/develop application mobile`
+  - [x] Carte, point, itinéraire OSRM et distance de secours
+- [ ] Verify it: `/check verify application mobile`
 
-### 6. Design system · needs a decision
+### 6. Design system · in-progress
 Le langage visuel commun au mobile et au web, lisible sur petit écran et simple à utiliser en conduite. À décider : garder ou non `DESIGN-shopify.md` comme référence.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `apps/native/global.css`, `apps/native/components/ui.tsx`
 **Done when:** couleurs, textes et composants de base sont définis pour le mobile et le web, et les montants en ariary s'affichent de la même façon partout.
 - [ ] Design it (spec): `/architect design system`
+- [x] Build it: `/develop application mobile`
+  - [x] Jetons noir et blanc et composants de base du mobile, montants en ariary
+- [ ] Verify it: `/check verify application mobile`
 
-### 7. Français et malagasy · needs a decision
+### 7. Français et malagasy · in-progress
 Ranger tous les textes dans des fichiers de langue avant de construire les écrans, pour éviter de les reprendre ensuite.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `apps/native/lib/i18n/`
 **Done when:** on change de langue depuis le profil, et les textes, erreurs et notifications suivent. Le malagasy est relu par un locuteur.
 - [ ] Design it (spec): `/architect français et malagasy`
+- [ ] Build it: `/develop application mobile`
+  - [x] Français et malagasy, langue dans le profil
+  - [ ] Relecture du malagasy par un locuteur : à faire
+- [ ] Verify it: `/check verify application mobile`
 
 ### 8. Mise en ligne de la démo · needs a decision
 Un serveur, une base et un back office accessibles en ligne, plus une application Android installable. Faite tôt pour découvrir les problèmes de déploiement avant le dernier jour.
@@ -111,10 +133,14 @@ Un serveur, une base et un back office accessibles en ligne, plus une applicatio
 
 ## Slice 1: La course de bout en bout
 
-### 9. Première course complète · Beta · needs a decision
+### 9. Première course complète · Beta · in-progress
 Le fil complet, volontairement étroit : un client demande une voiture, un chauffeur déjà validé la reçoit et accepte le tarif indicatif, puis le serveur fait avancer la course jusqu'à la fin. Cette tranche contient aussi le cycle des statuts et le calcul du tarif.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `packages/api/src/domain/rides.ts`, `packages/api/src/routers/`, `apps/native/app/`
 **Done when:** une course passe de la demande à `COMPLETED` entre deux comptes réels, le serveur refuse toute transition interdite, et un double clic ne crée pas deux réservations.
 - [ ] Design it (spec): `/architect première course complète`
+- [x] Build it: `/develop application mobile`
+  - [x] Course de la demande à `COMPLETED`, script `verify:mobile`
+- [ ] Verify it: `/check verify application mobile`
 
 ## Slice 2: Pouvoir tester seul
 
@@ -125,73 +151,115 @@ Depuis le web, piloter des chauffeurs de test qui répondent, négocient et se d
 
 ## Slice 3: Distribution et prix
 
-### 11. Distribution par groupes · Beta · needs a decision
+### 11. Distribution par groupes · Beta · in-progress
 Solliciter 1 à 3 chauffeurs éligibles par groupe, 20 secondes par groupe, 3 secondes de pause, 4 groupes maximum. Cette tranche définit aussi le cycle de vie d'une offre et la pause de recherche.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `packages/api/src/domain/dispatch.ts`
 **Done when:** les délais sont tenus par le serveur, un chauffeur ayant refusé n'est pas sollicité à nouveau, et s'il n'y a aucun chauffeur le client l'apprend avec `NO_DRIVER_FOUND`.
 - [ ] Design it (spec): `/architect distribution par groupes`
+- [x] Build it: `/develop application mobile`
+  - [x] Groupes, délais, pause de recherche, `NO_DRIVER_FOUND`
+- [ ] Verify it: `/check verify application mobile`
 
-### 12. Comparaison et attribution · Beta
+### 12. Comparaison et attribution · Beta · in-progress
 Le client compare les offres et choisit. Le premier qui répond ne gagne pas automatiquement. S'appuie sur la spec de la distribution.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `packages/api/src/domain/offers.ts`, `apps/native/app/(client)/booking/[id].tsx`
 **Done when:** deux confirmations simultanées donnent un seul chauffeur attribué, un chauffeur ne peut pas être sur deux courses, et les autres offres deviennent caduques (scénario E).
-- [ ] Construire : `/develop comparaison et attribution`
+- [x] Build it: `/develop application mobile`
+  - [x] Comparaison et attribution atomique
+- [ ] Verify it: `/check verify application mobile`
 
-### 13. Négociation encadrée · Beta · needs a decision
+### 13. Négociation encadrée · Beta · in-progress
 Accepter, refuser ou faire une contre proposition, une maximum par partie, dans la limite de ±20 %, avec les motifs d'ajustement.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `packages/api/src/domain/offers.ts`, `apps/native/app/(driver)/(tabs)/accueil.tsx`
 **Done when:** un prix hors limite ou une offre expirée sont refusés par le serveur, le prix est verrouillé après accord, et chaque action garde son auteur et son heure (scénario D).
 - [ ] Design it (spec): `/architect négociation encadrée`
+- [x] Build it: `/develop application mobile`
+  - [x] Accepter, refuser, contre proposition, limites de prix
+- [ ] Verify it: `/check verify application mobile`
 
 ## Slice 4: Le vrai choix du client
 
-### 14. Catégories et capacité
+### 14. Catégories et capacité · in-progress
 Voiture, tuk-tuk ou automatique, le nombre de passagers et un tarif par catégorie.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `packages/api/src/domain/trip.ts`, `apps/native/app/(client)/(tabs)/reserver.tsx`
 **Done when:** une catégorie choisie n'est jamais remplacée, le mode automatique identifie clairement chaque offre, et un véhicule trop petit n'est pas proposé (scénarios A, B et C).
-- [ ] Construire : `/develop catégories et capacité`
+- [x] Build it: `/develop application mobile`
+  - [x] Trois modes, tarif par catégorie, capacité
+- [ ] Verify it: `/check verify application mobile`
 
-### 15. Lieux et zones
+### 15. Lieux et zones · in-progress
 Choisir un lieu par GPS, carte, quartier ou repère, avec une description en complément. L'administration gère les quartiers, les repères et les zones de service.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `apps/native/components/place-picker.tsx`, `apps/server/scripts/seed-mobile.ts`
 **Done when:** le client donne un lieu sans adresse postale et le tarif se calcule, un lieu hors zone est refusé clairement, et l'admin modifie quartiers et zones sans mise à jour de l'application.
-- [ ] Construire : `/develop lieux et zones`
+- [ ] Build it: `/develop application mobile`
+  - [x] GPS, carte, quartier, repère et zones côté client
+  - [ ] Gestion par l'admin depuis le web : pas construite
+- [ ] Verify it: `/check verify application mobile`
 
 ## Slice 5: Une course fiable
 
-### 16. Suivi du chauffeur
+### 16. Suivi du chauffeur · in-progress
 Voir l'identité du chauffeur, son véhicule, sa position et l'avancement, et pouvoir l'appeler.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `apps/native/app/(client)/booking/[id].tsx`, `apps/native/lib/driver-location.ts`
 **Done when:** la position se met à jour pendant la course, et une position ancienne est signalée comme telle, jamais présentée comme actuelle.
-- [ ] Construire : `/develop suivi du chauffeur`
+- [x] Build it: `/develop application mobile`
+  - [x] Identité, véhicule, position, appel, position ancienne signalée
+- [ ] Verify it: `/check verify application mobile`
 
-### 17. Annulations et incidents · needs a decision
+### 17. Annulations et incidents · in-progress
 Annulation par le client ou le chauffeur, client absent, chauffeur absent, et signalement d'un problème. Le cahier laisse ouverts les délais d'attente et le remplacement d'un chauffeur.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `packages/api/src/domain/rides.ts`
 **Done when:** chaque annulation garde son auteur et son motif, sans pénalité, l'autre partie est prévenue, et un chauffeur qui annule ne laisse pas le client sans issue.
 - [ ] Design it (spec): `/architect annulations et incidents`
+- [x] Build it: `/develop application mobile`
+  - [x] Annulation, retrait et remplacement, absences, signalement
+- [ ] Verify it: `/check verify application mobile`
 
-### 18. Changement de destination
+### 18. Changement de destination · in-progress
 Avant la prise en charge, recalculer le tarif et demander l'accord des deux parties. Si l'une refuse, la destination et le prix ne changent pas.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `packages/api/src/domain/rides.ts`
 **Done when:** le nouveau prix ne s'applique qu'après l'accord du client et du chauffeur, et la modification est historisée.
-- [ ] Construire : `/develop changement de destination`
+- [x] Build it: `/develop application mobile`
+  - [x] Nouveau prix appliqué après les deux accords
+- [ ] Verify it: `/check verify application mobile`
 
-### 19. Paiement en espèces · needs a decision
+### 19. Paiement en espèces · in-progress
 Séparer prix convenu, montant payé et statut du paiement. Le chauffeur déclare le montant, le client peut contester.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `packages/api/src/domain/rides.ts`, `apps/native/app/(driver)/ride/[id].tsx`
 **Done when:** terminer une course ne marque pas le paiement comme reçu, un paiement partiel ou contesté se voit clairement, et une déclaration manquante ne bloque pas le chauffeur (scénario G).
 - [ ] Design it (spec): `/architect paiement en espèces`
+- [x] Build it: `/develop application mobile`
+  - [x] Déclaration et contestation, statut séparé
+- [ ] Verify it: `/check verify application mobile`
 
-### 20. Historique et revenus
+### 20. Historique et revenus · in-progress
 Le client revoit ses courses, le chauffeur voit son historique et ses recettes du jour.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `apps/native/app/(client)/(tabs)/courses.tsx`, `apps/native/app/(driver)/(tabs)/revenus.tsx`
 **Done when:** chaque course affiche date, trajet, catégorie, prix et état du paiement, et les recettes distinguent montants convenus et montants encaissés.
-- [ ] Construire : `/develop historique et revenus`
+- [x] Build it: `/develop application mobile`
+  - [x] Historique client et chauffeur, recettes du jour
+- [ ] Verify it: `/check verify application mobile`
 
-### 21. Connexion instable · Beta
+### 21. Connexion instable · Beta · in-progress
 Renforcer le fil complet face aux coupures de réseau, selon les règles de la fondation temps réel.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `apps/native/lib/use-action.ts`, `apps/native/components/offline-banner.tsx`
 **Done when:** une course confirmée revient intacte après une coupure, les événements se synchronisent au retour du réseau, et une action envoyée deux fois n'agit qu'une fois (scénario F).
-- [ ] Construire : `/develop connexion instable`
+- [x] Build it: `/develop application mobile`
+  - [x] Reprise, renvoi sans doublon, bandeau hors ligne
+- [ ] Verify it: `/check verify application mobile`
 
 ## Slice 6: Faire entrer les chauffeurs
 
-### 22. Dossier chauffeur et véhicules · needs a decision
+### 22. Dossier chauffeur et véhicules · in-progress
 Le chauffeur complète son profil et sa relation professionnelle, envoie ses documents, enregistre ses véhicules et choisit celui qu'il utilise. Il passe en ligne et disponible.
+spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `apps/native/app/(driver)/(tabs)/dossier.tsx`, `apps/server/src/files.ts`
 **Done when:** le chauffeur envoie un dossier complet et suit son état, et seul un chauffeur disponible avec compte et véhicule validés reçoit des demandes.
 - [ ] Design it (spec): `/architect dossier chauffeur et véhicules`
+- [x] Build it: `/develop application mobile`
+  - [x] Profil, véhicules, documents, état, éligibilité
+- [ ] Verify it: `/check verify application mobile`
 
-### 30. Socle de l'espace admin · in-progress · from spec 0002
+### 30. Socle de l'espace admin · done · from spec 0002
 Fermer le web à tout ce qui n'est pas l'équipe, poser la coquille `/admin`, le design noir et blanc, le premier admin et les données de test. Les fonctions 23 à 27 s'y branchent.
 spec [0002](../../specs/_root/0002-espace-admin-web/0001-socle.md) · code in `apps/web/src/routes/admin/`, `packages/api/src/domain/`, `apps/server/scripts/`
 **Done when:** seule l'équipe entre dans `/admin`, un support ne peut pas appeler une action admin, le design suit `DESIGN-uber.md` sous la marque Zay, et le seed remplit chaque écran.
@@ -216,7 +284,7 @@ spec [0002](../../specs/_root/0002-espace-admin-web/0005-validation-dossiers.md)
 
 ## Slice 7: Le back office
 
-### 24. Supervision et signalements · in-progress
+### 24. Supervision et signalements · done
 Voir les réservations, leurs statuts, leurs événements et les annulations, et traiter les signalements.
 spec [0002](../../specs/_root/0002-espace-admin-web/0004-supervision-signalements.md) · code in `packages/api/src/routers/admin/bookings.ts`, `reports.ts`, `apps/web/src/routes/admin/reservations/`, `signalements/`
 **Done when:** l'équipe retrouve une réservation et son historique complet, et fait avancer un signalement jusqu'à sa clôture.

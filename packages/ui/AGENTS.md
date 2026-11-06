@@ -28,7 +28,7 @@ npx shadcn@latest add <component> -c packages/ui
 
 ## Gotchas
 
-- The design system is not decided yet (scope feature 6), so treat the current tokens as starter values.
+- The tokens follow the design reference named in the root `AGENTS.md` (spec 0002). `apps/native/global.css` copies the same values, so change both together.
 - `components.json` here and in `apps/web` have to stay aligned.
 
 ## Agent skills

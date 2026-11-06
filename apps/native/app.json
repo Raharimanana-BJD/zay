@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "zay-app",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.zay-app"
@@ -18,7 +18,12 @@
         "monochromeImage": "./assets/images/logo.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.zayapp"
+      "package": "com.anonymous.zayapp",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -27,6 +32,19 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Zay utilise votre position pour le départ de la course et le suivi du chauffeur."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Zay utilise vos photos pour le dossier chauffeur.",
+          "cameraPermission": "Zay utilise l'appareil photo pour le dossier chauffeur."
+        }
+      ],
       [
         "expo-splash-screen",
         {

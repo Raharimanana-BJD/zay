@@ -22,9 +22,9 @@ Tracer Bullet (une vraie course marche d'abord de bout en bout, puis chaque tran
 # Install (also generates the env types)
 bun install
 
-# First run: start PostgreSQL, then apply the schema
+# First run: start PostgreSQL, then apply the migrations
 bun run db:start
-bun run db:push
+bun run db:migrate
 
 # Dev: all apps, or one of them
 bun run dev
@@ -45,11 +45,11 @@ bun run env:generate
 bun run auth:generate
 ```
 
-No test runner or CI is set up yet.
+Tests run with `bun test` (for example `bun test packages/api/src/domain`). There is no `test` script or CI yet.
 
 ## Specs
 
-Stored in `docs/specs/`. Format: `docs/specs/NNNN-title.md`.
+Stored in `docs/specs/`. Format: `docs/specs/_root/NNNN-title/index.md`.
 
 ## Rules
 
@@ -60,7 +60,7 @@ Stored in `docs/specs/`. Format: `docs/specs/NNNN-title.md`.
 - Packages ship TypeScript source with no build step. Import by full path, for example `@zay-app/api/routers/index`.
 - Dependencies used by several workspaces take their version from the catalog in the root `package.json` (`catalog:`).
 - Bun's automatic env loading is turned off. Run tools that need env values from the owning app, through Varlock.
-- `DESIGN-shopify.md` is not an adopted reference yet. Scope feature 6 decides whether to keep it.
+- `DESIGN-uber.md` is the design reference for web and mobile, under the Zay brand. Its name, logo and fonts never appear in the product (spec 0002, AC-7).
 
 ## Agent skills
 

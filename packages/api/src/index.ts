@@ -39,3 +39,18 @@ export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   }
   return next();
 });
+
+/** The role is read from the database on every request, never from the client. */
+export const clientProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.session.user.role !== "client") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "ROLE_NOT_ALLOWED" });
+  }
+  return next();
+});
+
+export const driverProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.session.user.role !== "driver") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "ROLE_NOT_ALLOWED" });
+  }
+  return next();
+});

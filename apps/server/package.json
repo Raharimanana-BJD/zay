@@ -3,16 +3,18 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
+    "admin:create": "bun run scripts/create-admin.ts",
+    "auth:generate": "varlock run -- bun x auth@1.7.12 generate --config src/services.ts --output ../../packages/db/src/schema/auth.ts --yes",
     "build": "tsdown",
     "check-types": "tsc --noEmit",
     "compile": "bun build --compile --no-compile-autoload-dotenv --minify --sourcemap --bytecode ./src/index.ts --outfile server",
-    "dev": "bun run --hot src/index.ts",
-    "start": "bun run dist/index.mjs",
-    "env:generate": "varlock codegen",
     "db:verify": "bun run scripts/verify-data-model.ts",
-    "admin:create": "bun run scripts/create-admin.ts",
+    "dev": "bun run --hot src/index.ts",
+    "env:generate": "varlock codegen",
     "seed:backoffice": "bun run scripts/seed-backoffice.ts",
-    "auth:generate": "varlock run -- bun x auth@1.7.12 generate --config src/services.ts --output ../../packages/db/src/schema/auth.ts --yes"
+    "seed:mobile": "bun run scripts/seed-mobile.ts",
+    "start": "bun run dist/index.mjs",
+    "verify:mobile": "bun run scripts/verify-mobile-flow.ts"
   },
   "dependencies": {
     "@hono/trpc-server": "^0.4.2",
