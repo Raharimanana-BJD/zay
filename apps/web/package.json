@@ -5,6 +5,7 @@
   "scripts": {
     "build": "vite build",
     "serve": "vite preview",
+    "start": "srvx serve --prod --entry ./dist/server/server.js --static ../client",
     "dev": "vite dev",
     "check-types": "vite build && tsc --noEmit",
     "env:generate": "varlock codegen"
@@ -30,6 +31,7 @@
     "react-dom": "^19.3.0",
     "recharts": "catalog:",
     "sonner": "catalog:",
+    "srvx": "1.0.8",
     "tailwindcss": "catalog:",
     "varlock": "catalog:",
     "zod": "catalog:"

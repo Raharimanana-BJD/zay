@@ -1,0 +1,19 @@
+# Keep the build context small, and keep local secrets out of the images.
+**/node_modules
+**/dist
+**/.turbo
+**/.tanstack
+**/.env
+**/.env.*
+!**/.env.schema
+**/.expo
+**/uploads
+.git
+.vscode
+.claude
+.agents
+assets
+docs
+apps/native/android
+apps/native/ios
+*.md
