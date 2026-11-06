@@ -1,0 +1,82 @@
+# Production stack for Dokploy: PostgreSQL, migrations, API server and web app.
+# The values come from the Environment tab in Dokploy. See docs/deploy/dokploy.md.
+services:
+  postgres:
+    image: postgis/postgis:17-3.6-alpine
+    environment:
+      POSTGRES_DB: zay
+      POSTGRES_USER: zay
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zay -d zay"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Runs the pending migrations, then exits. The API starts only if this succeeds.
+  migrate:
+    build:
+      context: .
+      target: server
+    working_dir: /app/packages/db
+    command: ["bun", "run", "db:migrate:deploy"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://zay:${POSTGRES_PASSWORD:?}@postgres:5432/zay
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+    restart: "no"
+
+  server:
+    build:
+      context: .
+      target: server
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgres://zay:${POSTGRES_PASSWORD:?}@postgres:5432/zay
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?}
+      BETTER_AUTH_URL: https://${API_DOMAIN:?}
+      CORS_ORIGIN: https://${WEB_DOMAIN:?}
+    volumes:
+      - uploads:/app/apps/server/uploads
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    # Listed on purpose: when a domain is added, Dokploy appends its own network
+    # here. Without this entry the service would lose access to the others.
+    networks:
+      - default
+    expose:
+      - "3000"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        VITE_SERVER_URL: https://${API_DOMAIN:?}
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      VITE_SERVER_URL: https://${API_DOMAIN:?}
+    depends_on:
+      - server
+    # Listed on purpose: when a domain is added, Dokploy appends its own network
+    # here. Without this entry the service would lose access to the others.
+    networks:
+      - default
+    expose:
+      - "3001"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  uploads:

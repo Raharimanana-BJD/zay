@@ -121,6 +121,7 @@
         "react-dom": "^19.3.0",
         "recharts": "catalog:",
         "sonner": "catalog:",
+        "srvx": "1.0.8",
         "tailwindcss": "catalog:",
         "varlock": "catalog:",
         "zod": "catalog:",
