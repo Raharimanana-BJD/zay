@@ -38,6 +38,7 @@ To add blocks that only this app uses, run the shadcn CLI from this folder.
 
 - `src/routeTree.gen.ts` is generated and ignored by git, so never edit it. That is why `check-types` builds first.
 - Routes under `/admin` set `ssr: false`, so their session check runs in the browser.
+- The live map adds `VITE_CARTO_API_KEY` to CARTO requests through `transformRequest`, because the shared map component builds the style URL without a key.
 - The guard in `/admin` protects pages only. Every sensitive action still needs its own check on the server.
 
 ## Agent skills

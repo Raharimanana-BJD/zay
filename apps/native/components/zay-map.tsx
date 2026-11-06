@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import { View } from "react-native";
 import WebView, { type WebViewMessageEvent } from "react-native-webview";
 
+import { ENV } from "../src/env";
+
 export interface MapMarker {
   id: string;
   kind: "pickup" | "destination" | "driver";
@@ -32,8 +34,8 @@ const HTML = `<!doctype html><html><head><meta charset="utf-8">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 var map=L.map('m',{zoomControl:false,attributionControl:true}).setView([${TOLIARA.lat},${TOLIARA.lng}],14);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',
-attribution:'&copy; OpenStreetMap &copy; CARTO'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(ENV.EXPO_PUBLIC_CARTO_API_KEY)}',{maxZoom:19,subdomains:'abcd',
+attribution:'&copy; OpenStreetMap contributors, &copy; CARTO'}).addTo(map);
 var markers={},line=null,fitted='';
 function icon(k,s){var c=k==='pickup'?'p':k==='destination'?'d':'c';var z=k==='driver'?32:24;
 return L.divIcon({className:'',iconSize:[z,z],iconAnchor:[z/2,z/2],html:'<div class="'+c+(s?' s':'')+'"></div>'})}
@@ -51,7 +53,7 @@ map.on('moveend',function(){var c=map.getCenter();window.ReactNativeWebView.post
 window.ReactNativeWebView.postMessage(JSON.stringify({ready:true}));
 </script></body></html>`;
 
-/** Leaflet with raster tiles: no key, and light on an entry level Android (spec 0003). */
+/** Leaflet with CARTO raster tiles: light on an entry level Android (spec 0003). */
 export function ZayMap({
   markers = [],
   line,

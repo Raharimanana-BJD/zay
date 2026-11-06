@@ -17,7 +17,7 @@ Les fonctions 3, 4, 5, 6, 7, 9, 11, 13, 17, 19 et 22 du scope attendaient chacun
 | Temps réel (4) | Lecture répétée par tRPC toutes les 3 s tant que l'écran est ouvert. Reprise après coupure : le téléphone relit l'état, sans file d'actions hors ligne. Les délais et les expirations restent contrôlés par l'heure du serveur |
 | Notifications (4) | Pas de push : il exige un projet Firebase et une clé. À la place, vibration et bandeau dans l'application, et l'écran chauffeur reste allumé en ligne. Application en arrière plan : pas d'alerte, à reprendre plus tard |
 | Minuteries (11) | `setInterval` d'une seconde dans `apps/server`, qui appelle `runDispatchTick`. Toutes les échéances sont en base, donc un redémarrage ne perd rien |
-| Carte (5) | WebView avec Leaflet et les tuiles raster CARTO, sans clé. Plus léger qu'un moteur vectoriel sur un petit Android |
+| Carte (5) | WebView avec Leaflet et les tuiles raster CARTO, avec une clé publique (`EXPO_PUBLIC_CARTO_API_KEY`), exigée par CARTO depuis 2026. Plus léger qu'un moteur vectoriel sur un petit Android |
 | Itinéraire (5) | Serveur public OSRM avec un délai de 3 s. Secours : `ST_Distance` × 1,3, enregistré en `fallback` |
 | Design (6) | Les jetons noir et blanc de `DESIGN-uber.md` déjà adoptés par le web, en thème clair, avec HeroUI Native et la police système |
 | Langues (7) | Dictionnaires typés `fr` et `mg` dans `apps/native/lib/i18n`, sans dépendance. La langue suit `user.locale`. Le malagasy reste à relire par un locuteur |

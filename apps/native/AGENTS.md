@@ -47,6 +47,7 @@ bun run check-types
 - `com.anonymous.zayapp` in `app.json` is still a placeholder package name.
 - There is no `eas.json` yet, so EAS builds are not set up.
 - The map loads Leaflet and its tiles from the internet, so it stays empty without a network.
+- Without a valid `EXPO_PUBLIC_CARTO_API_KEY`, CARTO still answers 200, with tiles that read "API KEY REQUIRED". The key is built into the APK, so changing it needs a new build.
 - Remove the Hermes Babel plugin once the issue linked at the top of that file is fixed.
 
 ## Agent skills

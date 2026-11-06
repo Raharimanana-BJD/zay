@@ -63,10 +63,12 @@ services:
       target: web
       args:
         VITE_SERVER_URL: https://${API_DOMAIN:?}
+        VITE_CARTO_API_KEY: ${VITE_CARTO_API_KEY:?}
     environment:
       NODE_ENV: production
       PORT: "3001"
       VITE_SERVER_URL: https://${API_DOMAIN:?}
+      VITE_CARTO_API_KEY: ${VITE_CARTO_API_KEY:?}
     depends_on:
       - server
     # Listed on purpose: when a domain is added, Dokploy appends its own network

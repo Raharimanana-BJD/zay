@@ -19,6 +19,7 @@ La stack est dans `docker-compose.prod.yml` : PostgreSQL avec PostGIS, les migra
    BETTER_AUTH_SECRET=  # openssl rand -hex 32
    API_DOMAIN=api.zay.exemple.com
    WEB_DOMAIN=zay.exemple.com
+   VITE_CARTO_API_KEY=  # clé CARTO, à demander sur https://carto.com/basemaps/apikey/
    ```
 
 4. Dans **Domains**, ajouter deux domaines, avec HTTPS et Let's Encrypt :
@@ -46,6 +47,7 @@ Puis vérifier :
 ## Bon à savoir
 
 - Changer `API_DOMAIN` demande un nouveau build du web, car l'adresse est écrite dans le code du navigateur. Il faut aussi reconstruire l'application mobile avec `EXPO_PUBLIC_SERVER_URL`.
+- Changer `VITE_CARTO_API_KEY` demande aussi un nouveau build du web. L'application mobile a sa propre variable, `EXPO_PUBLIC_CARTO_API_KEY`, et doit être reconstruite de son côté.
 - Le HTTPS est obligatoire : les cookies de session sont en `Secure` et `SameSite=None`.
 - Garder une seule instance de `server`, car le dispatcher tourne dans le processus.
 - Les données sont dans les volumes `postgres_data` et `uploads`. Les sauvegardes se règlent dans **Volume Backups**.

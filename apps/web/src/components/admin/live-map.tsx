@@ -13,6 +13,7 @@ import { cn } from "@zay-app/ui/lib/utils";
 import { BikeIcon, CarFrontIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { ENV } from "@/env";
 import { formatAge } from "@/lib/format";
 import {
   activityLabel,
@@ -31,6 +32,18 @@ interface Coordinates {
 
 const TOLIARA_CENTER: [number, number] = [43.6667, -23.35];
 const CITY_ZOOM = 13;
+const CARTO_HOST_SUFFIX = ".cartocdn.com";
+
+// The map component builds the CARTO style URL itself, so the key is added here.
+// CARTO then returns that style with the key on its tile, font and sprite URLs.
+const addCartoKey = (url: string) => {
+  const parsed = new URL(url);
+  if (!parsed.hostname.endsWith(CARTO_HOST_SUFFIX)) {
+    return { url };
+  }
+  parsed.searchParams.set("key", ENV.VITE_CARTO_API_KEY);
+  return { url: parsed.toString() };
+};
 const FOCUS_ZOOM = 15;
 const GLIDE_MS = 1000;
 
@@ -318,6 +331,7 @@ export default function LiveMap({
             center={TOLIARA_CENTER}
             ref={mapRef}
             theme="light"
+            transformRequest={addCartoKey}
             zoom={CITY_ZOOM}
           >
             <MapControls showFullscreen />
