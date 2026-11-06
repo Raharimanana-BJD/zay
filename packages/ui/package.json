@@ -19,6 +19,7 @@
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.0",
     "lucide-react": "^1.41.0",
+    "maplibre-gl": "^6",
     "next-themes": "catalog:",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
+    "@types/geojson": "^7946.0.16",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@zay-app/config": "workspace:*",

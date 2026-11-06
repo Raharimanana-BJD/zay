@@ -8,7 +8,7 @@ import z from "zod";
 import { router, staffProcedure } from "../../index";
 import { TIME_ZONE } from "./common";
 
-const ACTIVE = [
+export const ACTIVE = [
   "ACCEPTED",
   "DRIVER_ARRIVING",
   "ARRIVED",

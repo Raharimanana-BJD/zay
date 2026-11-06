@@ -27,3 +27,17 @@ export function priceLabel(
     ? `${formatAr(estimatedAr)} (estimé)`
     : "Non défini";
 }
+
+const SECONDS_PER_MINUTE = 60;
+const SECONDS_PER_HOUR = 3600;
+
+/** How long ago a position arrived: `il y a 12 s`, `il y a 3 min`, `il y a 2 h`. */
+export function formatAge(ageS: number) {
+  if (ageS < SECONDS_PER_MINUTE) {
+    return `il y a ${ageS} s`;
+  }
+  if (ageS < SECONDS_PER_HOUR) {
+    return `il y a ${Math.floor(ageS / SECONDS_PER_MINUTE)} min`;
+  }
+  return `il y a ${Math.floor(ageS / SECONDS_PER_HOUR)} h`;
+}

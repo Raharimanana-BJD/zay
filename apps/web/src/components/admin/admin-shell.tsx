@@ -21,6 +21,7 @@ import {
   LayoutDashboardIcon,
   LogOutIcon,
   type LucideIcon,
+  MapIcon,
   MapPinnedIcon,
   ScrollTextIcon,
   SettingsIcon,
@@ -35,6 +36,7 @@ import { useSignOut } from "@/lib/use-sign-out";
 
 const OPERATIONS_ITEMS = [
   { to: "/admin", label: "Tableau de bord", icon: LayoutDashboardIcon },
+  { to: "/admin/carte", label: "Carte", icon: MapIcon },
   { to: "/admin/reservations", label: "Réservations", icon: MapPinnedIcon },
   { to: "/admin/signalements", label: "Signalements", icon: FlagIcon },
   { to: "/admin/chauffeurs", label: "Chauffeurs", icon: CarFrontIcon },
