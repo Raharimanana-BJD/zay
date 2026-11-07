@@ -26,11 +26,12 @@ const MapWebView = WebView<object>;
 const HTML = `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>html,body,#m{height:100%;margin:0;background:#efefef}
-.p{width:18px;height:18px;border-radius:50%;background:#000;border:3px solid #fff;box-shadow:0 1px 4px #0006}
-.d{width:18px;height:18px;background:#000;border:3px solid #fff;box-shadow:0 1px 4px #0006}
-.c{width:26px;height:26px;border-radius:50%;background:#000;border:3px solid #fff;box-shadow:0 1px 6px #0008}
-.s{background:#afafaf}</style></head><body><div id="m"></div>
+<style>html,body,#m{height:100%;margin:0;background:#e8e5da}
+.p{width:18px;height:18px;border-radius:50%;background:#0a0a0a;border:3px solid #fff;box-shadow:0 1px 4px #0006}
+.d{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#0a0a0a;box-shadow:0 1px 4px #0006;display:flex;align-items:center;justify-content:center}
+.d:after{content:'';width:10px;height:10px;border-radius:50%;background:#f7c910}
+.c{width:20px;height:20px;border-radius:50%;background:#0a0a0a;border:3px solid #fff;box-shadow:0 0 0 10px #f7c91055,0 1px 6px #0008}
+.s,.s:after{background:#afafaf;box-shadow:none}</style></head><body><div id="m"></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 var map=L.map('m',{zoomControl:false,attributionControl:true}).setView([${TOLIARA.lat},${TOLIARA.lng}],14);
@@ -38,13 +39,14 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=
 attribution:'&copy; OpenStreetMap contributors, &copy; CARTO'}).addTo(map);
 var markers={},line=null,fitted='';
 function icon(k,s){var c=k==='pickup'?'p':k==='destination'?'d':'c';var z=k==='driver'?32:24;
-return L.divIcon({className:'',iconSize:[z,z],iconAnchor:[z/2,z/2],html:'<div class="'+c+(s?' s':'')+'"></div>'})}
+var a=k==='destination'?[13,36]:[z/2,z/2];
+return L.divIcon({className:'',iconSize:[z,z],iconAnchor:a,html:'<div class="'+c+(s?' s':'')+'"></div>'})}
 window.zayUpdate=function(d){var seen={};(d.markers||[]).forEach(function(m){seen[m.id]=1;
 if(markers[m.id]){markers[m.id].setLatLng([m.lat,m.lng]);markers[m.id].setIcon(icon(m.kind,m.stale))}
 else{markers[m.id]=L.marker([m.lat,m.lng],{icon:icon(m.kind,m.stale),interactive:false}).addTo(map)}});
 Object.keys(markers).forEach(function(i){if(!seen[i]){map.removeLayer(markers[i]);delete markers[i]}});
 if(line){map.removeLayer(line);line=null}
-if(d.line&&d.line.length){line=L.polyline(d.line.map(function(p){return[p[1],p[0]]}),{color:'#000',weight:4}).addTo(map)}
+if(d.line&&d.line.length){var pts=d.line.map(function(p){return[p[1],p[0]]});line=L.layerGroup([L.polyline(pts,{color:'#0a0a0a',weight:3,opacity:.35}),L.polyline(pts,{color:'#f7c910',weight:6,dashArray:'1 11',lineCap:'round'})]).addTo(map)}
 var key=(d.markers||[]).filter(function(m){return m.kind!=='driver'}).map(function(m){return m.id+m.lat+m.lng}).join();
 if(d.center){map.setView([d.center.lat,d.center.lng],d.zoom||16)}
 else if(key!==fitted&&(d.markers||[]).length){fitted=key;var b=L.latLngBounds((d.markers||[]).map(function(m){return[m.lat,m.lng]}));
@@ -92,13 +94,13 @@ export function ZayMap({
   };
 
   return (
-    <View accessibilityLabel={label} className="flex-1 bg-surface-tertiary">
+    <View accessibilityLabel={label} className="flex-1 bg-map">
       <MapWebView
         onMessage={onMessage}
         originWhitelist={["*"]}
         ref={webView}
         source={{ html: HTML, baseUrl: "https://zay.app" }}
-        style={{ flex: 1, backgroundColor: "#efefef" }}
+        style={{ flex: 1, backgroundColor: "#e8e5da" }}
       />
     </View>
   );

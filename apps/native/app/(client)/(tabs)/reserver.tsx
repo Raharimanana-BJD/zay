@@ -1,7 +1,9 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { OfflineBanner } from "@/components/offline-banner";
 import {
@@ -12,6 +14,8 @@ import {
 } from "@/components/place-picker";
 import {
   Action,
+  Greeting,
+  INK,
   Muted,
   Notice,
   Screen,
@@ -26,29 +30,46 @@ import { trpc, trpcClient } from "@/utils/trpc";
 
 type Category = "car" | "tuk_tuk" | "auto";
 const MAX_PASSENGERS = 4;
+/** The floating tab bar: its height plus the gap under it. */
+const TAB_BAR_SPACE = 104;
 
 function PlaceField({
   label,
   value,
+  placeholder,
+  kind,
   onPress,
 }: {
   label: string;
   value?: string;
+  placeholder: string;
+  kind: "pickup" | "destination";
   onPress: () => void;
 }) {
   return (
     <Pressable
+      accessibilityHint={placeholder}
+      accessibilityLabel={value ? `${label}, ${value}` : label}
       accessibilityRole="button"
-      className="min-h-14 justify-center rounded-xl bg-surface-tertiary px-4 py-2"
+      className="min-h-16 flex-row items-center gap-4 rounded-2xl bg-surface px-5 py-3 active:opacity-80"
       onPress={onPress}
     >
-      <Text className="text-muted text-xs">{label}</Text>
-      <Text
-        className={`text-base ${value ? "font-medium text-foreground" : "text-muted"}`}
-        numberOfLines={1}
-      >
-        {value ?? label}
-      </Text>
+      {kind === "pickup" ? (
+        <View className="size-3 rounded-full bg-foreground" />
+      ) : (
+        <Ionicons color={INK} name="location-outline" size={16} />
+      )}
+      <View className="flex-1">
+        <Text className="font-bold text-muted text-xs uppercase tracking-widest">
+          {label}
+        </Text>
+        <Text
+          className={`text-lg ${value ? "font-bold text-foreground" : "font-medium text-field-placeholder"}`}
+          numberOfLines={1}
+        >
+          {value ?? placeholder}
+        </Text>
+      </View>
     </Pressable>
   );
 }
@@ -56,6 +77,8 @@ function PlaceField({
 export default function BookScreen() {
   const { t, has } = useI18n();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const me = useQuery(trpc.me.get.queryOptions());
   const [pickup, setPickup] = useState<Place | null>(null);
   const [destination, setDestination] = useState<Place | null>(null);
   const [picking, setPicking] = useState<"pickup" | "destination" | null>(null);
@@ -140,36 +163,63 @@ export default function BookScreen() {
       ? Boolean(quote.data?.quotes.length)
       : Boolean(quoteOf(category));
 
+  let searchLabel = t("home.search");
+  if (!destination) {
+    searchLabel = t("home.chooseDestination");
+  }
+
   return (
     <Screen scroll={false}>
-      <View className="h-[34%]">
-        <ZayMap
-          label={t("home.map")}
-          line={quote.data?.line}
-          markers={markers}
-        />
-      </View>
       <ScrollView
-        contentContainerClassName="gap-3 p-4"
+        contentContainerClassName="gap-4 px-6 pt-4"
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + TAB_BAR_SPACE + 16,
+        }}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
+        <Greeting name={me.data?.name} />
+        <View className="h-64 overflow-hidden rounded-3xl bg-map">
+          <ZayMap
+            label={t("home.map")}
+            line={quote.data?.line}
+            markers={markers}
+          />
+          <View
+            className="absolute top-4 left-4 flex-row items-center gap-1.5 rounded-full bg-surface px-4 py-2 shadow-black/10 shadow-sm"
+            pointerEvents="none"
+          >
+            <Ionicons color={INK} name="location-outline" size={14} />
+            <Text className="font-bold text-foreground text-sm">
+              {t("home.city")}
+            </Text>
+          </View>
+        </View>
         <OfflineBanner />
         {active.data ? (
           <Action
+            icon="navigate"
             label={t("home.resume")}
             onPress={() => router.push(`/booking/${active.data?.id}`)}
+            variant="brand"
           />
         ) : null}
-        <PlaceField
-          label={t("home.pickup")}
-          onPress={() => setPicking("pickup")}
-          value={pickup?.label}
-        />
-        <PlaceField
-          label={t("home.destination")}
-          onPress={() => setPicking("destination")}
-          value={destination?.label}
-        />
+        <View className="gap-3">
+          <PlaceField
+            kind="pickup"
+            label={t("home.pickup")}
+            onPress={() => setPicking("pickup")}
+            placeholder={t("place.myPosition")}
+            value={pickup?.label}
+          />
+          <PlaceField
+            kind="destination"
+            label={t("home.destination")}
+            onPress={() => setPicking("destination")}
+            placeholder={t("home.whereTo")}
+            value={destination?.label}
+          />
+        </View>
         {quoteError ? (
           <Notice tone="warning">
             {has(quoteError) ? t(quoteError) : t("errors.network")}
@@ -189,10 +239,11 @@ export default function BookScreen() {
           value={category}
         />
         <Stepper
-          label={t("home.passengers", { n: passengers })}
+          label={String(passengers)}
           max={MAX_PASSENGERS}
           min={1}
           onChange={setPassengers}
+          title={t("home.passengersLabel")}
           value={passengers}
         />
         {quote.data ? (
@@ -206,9 +257,10 @@ export default function BookScreen() {
           </Muted>
         ) : null}
         <Action
+          icon={destination ? undefined : "search"}
           isDisabled={!(available && !active.data) || quote.isPending}
           isLoading={create.isPending}
-          label={t("home.search")}
+          label={searchLabel}
           onPress={() => create.run({})}
         />
       </ScrollView>

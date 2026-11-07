@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@zay-app/api/routers/index";
@@ -5,7 +6,7 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { Spinner, Switch } from "heroui-native";
 import { useEffect, useRef, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { OfflineBanner } from "@/components/offline-banner";
 import { ReasonSheet } from "@/components/reason-sheet";
@@ -14,11 +15,14 @@ import {
   Action,
   Body,
   Card,
+  Greeting,
   Heading,
+  INK,
   Muted,
   Notice,
   Row,
   Screen,
+  StatTile,
   Stepper,
 } from "@/components/ui";
 import { type MapMarker, ZayMap } from "@/components/zay-map";
@@ -199,10 +203,79 @@ function IncomingOffer({
   );
 }
 
+/** What still blocks the driver, with the way to the Dossier tab. */
+function DossierBanner({ codes }: { codes: string[] }) {
+  const { t } = useI18n();
+  const router = useRouter();
+  const title = codes.includes("ACCOUNT_NOT_APPROVED")
+    ? t("driver.dossierTitle")
+    : t("driver.blocked");
+  return (
+    <View className="gap-4 rounded-3xl bg-foreground p-5">
+      <View className="flex-row gap-3">
+        <View className="size-10 items-center justify-center rounded-full bg-brand">
+          <Ionicons color={INK} name="warning-outline" size={20} />
+        </View>
+        <View className="flex-1 gap-1">
+          <Text
+            accessibilityRole="header"
+            className="font-bold text-lg text-white"
+          >
+            {title}
+          </Text>
+          {codes.map((code) => (
+            <Text className="text-sm text-white/75 leading-5" key={code}>
+              {t(`errors.${code}` as TKey)}
+            </Text>
+          ))}
+        </View>
+      </View>
+      <Action
+        label={t("driver.dossierAction")}
+        onPress={() => router.push("/dossier")}
+        trailingIcon="chevron-forward"
+        variant="brand"
+      />
+    </View>
+  );
+}
+
+function ToggleRow({
+  label,
+  hint,
+  value,
+  isDisabled,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  value: boolean;
+  isDisabled: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <View
+      className={`min-h-16 flex-row items-center justify-between gap-4 ${isDisabled ? "opacity-50" : ""}`}
+    >
+      <View className="shrink gap-0.5">
+        <Text className="font-bold text-foreground text-lg">{label}</Text>
+        <Muted>{hint}</Muted>
+      </View>
+      <Switch
+        accessibilityLabel={label}
+        isDisabled={isDisabled}
+        isSelected={value}
+        onSelectedChange={onChange}
+      />
+    </View>
+  );
+}
+
 export default function DriverHome() {
   const { t } = useI18n();
   const router = useRouter();
   const showError = useErrorToast();
+  const me = useQuery(trpc.me.get.queryOptions());
   const home = useQuery({
     ...trpc.driver.home.queryOptions(),
     refetchInterval: POLL_MS,
@@ -267,73 +340,63 @@ export default function DriverHome() {
     );
   }
 
+  const blockers = data?.blockers ?? [];
+
   return (
-    <Screen scroll={false}>
-      <View className="h-[30%]">
+    <Screen>
+      <Greeting name={me.data?.name} />
+      <View className="h-44 overflow-hidden rounded-3xl bg-map">
         <ZayMap label={t("home.map")} markers={markers} />
       </View>
-      <ScrollView contentContainerClassName="gap-3 p-4">
-        <OfflineBanner />
-        {data?.blockers.map((code) => (
-          <Notice key={code} tone="warning">
-            {t(`errors.${code}` as TKey)}
-          </Notice>
-        ))}
-        {location.state === "denied" ? (
-          <Notice tone="danger">{t("driver.gpsDenied")}</Notice>
-        ) : null}
-        {data?.ride ? (
-          <Action
-            label={t("driver.openRide")}
-            onPress={() => router.push(`/ride/${data.ride?.id}`)}
-          />
-        ) : null}
-        {data?.offer ? (
-          <IncomingOffer
-            key={data.offer.id}
-            offer={data.offer}
-            refresh={refetch}
-            updatedAt={home.dataUpdatedAt}
-          />
-        ) : null}
-        <Card>
-          <View className="min-h-12 flex-row items-center justify-between">
-            <View className="shrink">
-              <Body>{t("driver.online")}</Body>
-              <Muted>{t("driver.onlineHint")}</Muted>
-            </View>
-            <Switch
-              accessibilityLabel={t("driver.online")}
-              isDisabled={availability.isPending}
-              isSelected={Boolean(data?.isOnline)}
-              onSelectedChange={(isOnline) =>
-                availability.mutate({ isOnline, isAvailable: false })
-              }
-            />
-          </View>
-          <View className="min-h-12 flex-row items-center justify-between">
-            <View className="shrink">
-              <Body>{t("driver.available")}</Body>
-              <Muted>{t("driver.availableHint")}</Muted>
-            </View>
-            <Switch
-              accessibilityLabel={t("driver.available")}
-              isDisabled={availability.isPending || !data?.isOnline}
-              isSelected={Boolean(data?.isAvailable)}
-              onSelectedChange={(isAvailable) =>
-                availability.mutate({ isOnline: true, isAvailable })
-              }
-            />
-          </View>
-        </Card>
-        <Card>
-          <Row label={t("earnings.rides")} value={data?.today.rides ?? 0} />
-          <Row
-            label={t("earnings.collected")}
-            value={formatAr(data?.today.collectedAr ?? 0)}
-          />
-        </Card>
-      </ScrollView>
+      <OfflineBanner />
+      {location.state === "denied" ? (
+        <Notice tone="danger">{t("driver.gpsDenied")}</Notice>
+      ) : null}
+      {data?.ride ? (
+        <Action
+          icon="navigate"
+          label={t("driver.openRide")}
+          onPress={() => router.push(`/ride/${data.ride?.id}`)}
+          variant="brand"
+        />
+      ) : null}
+      {data?.offer ? (
+        <IncomingOffer
+          key={data.offer.id}
+          offer={data.offer}
+          refresh={refetch}
+          updatedAt={home.dataUpdatedAt}
+        />
+      ) : null}
+      {blockers.length > 0 ? <DossierBanner codes={blockers} /> : null}
+      <View className="rounded-3xl bg-surface px-5 py-2 shadow-black/5 shadow-sm">
+        <ToggleRow
+          hint={t("driver.onlineHint")}
+          isDisabled={availability.isPending}
+          label={t("driver.online")}
+          onChange={(isOnline) =>
+            availability.mutate({ isOnline, isAvailable: false })
+          }
+          value={Boolean(data?.isOnline)}
+        />
+        <View className="h-px bg-separator" />
+        <ToggleRow
+          hint={t("driver.availableHint")}
+          isDisabled={availability.isPending || !data?.isOnline}
+          label={t("driver.available")}
+          onChange={(isAvailable) =>
+            availability.mutate({ isOnline: true, isAvailable })
+          }
+          value={Boolean(data?.isAvailable)}
+        />
+      </View>
+      <View className="flex-row gap-3">
+        <StatTile label={t("earnings.rides")} value={data?.today.rides ?? 0} />
+        <StatTile
+          label={t("earnings.collected")}
+          value={formatAr(data?.today.collectedAr ?? 0)}
+        />
+      </View>
     </Screen>
   );
 }

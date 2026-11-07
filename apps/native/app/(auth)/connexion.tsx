@@ -1,159 +1,92 @@
 import { useForm } from "@tanstack/react-form";
-import { FieldError, Input, Label, TextField, useToast } from "heroui-native";
-import { useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useToast } from "heroui-native";
+import { useEffect } from "react";
 import { Image, Text, View } from "react-native";
 import z from "zod";
-
-import { Action, Muted, Screen, Segment, Title } from "@/components/ui";
+import { Field } from "@/components/auth-fields";
+import { openVerification } from "@/components/auth-shell";
+import { KeyboardAwareScrollView, SafeAreaView } from "@/components/styled";
+import { Action, TextLink } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
-import { type Locale, useI18n } from "@/lib/i18n";
-import { useSetRegistering } from "@/lib/registering";
-import { queryClient, trpc, trpcClient } from "@/utils/trpc";
+import { useI18n } from "@/lib/i18n";
+import { ENV } from "../../src/env";
 
-const E164_PHONE = /^\+[1-9]\d{7,14}$/;
 const MIN_PASSWORD = 8;
-const MIN_NAME = 2;
 
-type Mode = "signIn" | "client" | "driver";
-type Relation = "owner" | "renter" | "employee";
-
-function Field({
-  label,
-  error,
-  ...input
-}: {
-  label: string;
-  error?: string;
-} & React.ComponentProps<typeof Input>) {
-  return (
-    <TextField isInvalid={Boolean(error)}>
-      <Label>{label}</Label>
-      <Input {...input} />
-      {error ? <FieldError>{error}</FieldError> : null}
-    </TextField>
-  );
-}
-
-export default function AuthScreen() {
-  const { t, locale, setLocale } = useI18n();
+export default function SignInScreen() {
+  const { t } = useI18n();
   const { toast } = useToast();
-  const setRegistering = useSetRegistering();
-  const [mode, setMode] = useState<Mode>("signIn");
-  const [relation, setRelation] = useState<Relation>("owner");
-  const isSignIn = mode === "signIn";
+  const { error: oauthError } = useLocalSearchParams<{ error?: string }>();
 
   const schema = z.object({
-    name: isSignIn
-      ? z.string()
-      : z.string().trim().min(MIN_NAME, t("auth.nameInvalid")),
     email: z.email(t("auth.emailInvalid")),
-    phone: isSignIn
-      ? z.string()
-      : z.string().trim().regex(E164_PHONE, t("auth.phoneInvalid")),
     password: z.string().min(MIN_PASSWORD, t("auth.passwordInvalid")),
   });
 
-  const fail = (message?: string) =>
-    toast.show({ variant: "danger", label: message || t("errors.generic") });
+  // Google only opens accounts that exist, and comes back here with an error otherwise.
+  useEffect(() => {
+    if (oauthError) {
+      toast.show({ variant: "danger", label: t("auth.googleFailed") });
+    }
+  }, [oauthError, toast, t]);
 
-  const signUp = async (value: z.infer<typeof schema>) => {
-    const isDriver = mode === "driver";
-    setRegistering(isDriver);
-    const result = await authClient.signUp.email({
-      name: value.name.trim(),
-      email: value.email.trim(),
-      phone: value.phone.trim(),
-      password: value.password,
-      locale,
+  const signInWithGoogle = async () => {
+    const result = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/",
+      errorCallbackURL: "/connexion?error=google",
     });
     if (result.error) {
-      setRegistering(false);
-      const key =
-        result.error.code === "PHONE_NUMBER_ALREADY_USED"
-          ? t("errors.PHONE_TAKEN")
-          : result.error.message;
-      fail(key);
-      return;
-    }
-    if (!isDriver) {
-      return;
-    }
-    try {
-      await trpcClient.driver.register.mutate({ employmentRelation: relation });
-    } catch {
-      fail(t("errors.network"));
-    } finally {
-      await queryClient.invalidateQueries(trpc.me.get.queryFilter());
-      setRegistering(false);
+      toast.show({ variant: "danger", label: t("auth.googleFailed") });
     }
   };
 
   const form = useForm({
-    defaultValues: { name: "", email: "", phone: "+261", password: "" },
+    defaultValues: { email: "", password: "" },
     validators: { onSubmit: schema },
     onSubmit: async ({ value }) => {
-      if (mode !== "signIn") {
-        await signUp(value);
-        return;
-      }
+      const email = value.email.trim();
       const result = await authClient.signIn.email({
-        email: value.email.trim(),
+        email,
         password: value.password,
       });
+      if (result.error?.code === "EMAIL_NOT_VERIFIED") {
+        // The server has just sent a new code.
+        openVerification(email);
+        return;
+      }
       if (result.error) {
-        fail(t("auth.signInFailed"));
+        toast.show({ variant: "danger", label: t("auth.signInFailed") });
       }
     },
   });
 
-  const relations: { value: Relation; label: string }[] = [
-    { value: "owner", label: t("relation.owner") },
-    { value: "renter", label: t("relation.renter") },
-    { value: "employee", label: t("relation.employee") },
-  ];
-
   return (
-    <Screen>
-      <Image
-        accessibilityLabel="Zay"
-        className="size-16"
-        resizeMode="contain"
-        source={require("@/assets/images/logo.png")}
-      />
-      <Title>{t("auth.welcome")}</Title>
-      <Muted>{t("auth.tagline")}</Muted>
-      <Segment<Locale>
-        onChange={setLocale}
-        options={[
-          { value: "fr", label: "Français" },
-          { value: "mg", label: "Malagasy" },
-        ]}
-        value={locale}
-      />
-      <Segment<Mode>
-        onChange={setMode}
-        options={[
-          { value: "signIn", label: t("auth.signIn") },
-          { value: "client", label: t("auth.asClient") },
-          { value: "driver", label: t("auth.asDriver") },
-        ]}
-        value={mode}
-      />
-      <View className="gap-3">
-        {isSignIn ? null : (
-          <form.Field name="name">
-            {(field) => (
-              <Field
-                autoComplete="name"
-                error={field.state.meta.errors[0]?.message}
-                label={t("auth.name")}
-                onBlur={field.handleBlur}
-                onChangeText={field.handleChange}
-                value={field.state.value}
-              />
-            )}
-          </form.Field>
-        )}
+    <SafeAreaView className="flex-1 bg-background" edges={["top", "bottom"]}>
+      <KeyboardAwareScrollView
+        bottomOffset={24}
+        contentContainerClassName="grow gap-5 px-6 pt-6 pb-6"
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Image
+          accessibilityIgnoresInvertColors
+          className="h-44 w-full"
+          resizeMode="contain"
+          source={require("@/assets/images/welcome.png")}
+        />
+        <View className="gap-2">
+          <Text
+            accessibilityRole="header"
+            className="font-black text-3xl text-foreground tracking-tight"
+          >
+            {t("auth.welcomeBack")}
+          </Text>
+          <Text className="text-base text-muted">
+            {t("auth.welcomeBackBody")}
+          </Text>
+        </View>
         <form.Field name="email">
           {(field) => (
             <Field
@@ -164,60 +97,57 @@ export default function AuthScreen() {
               label={t("auth.email")}
               onBlur={field.handleBlur}
               onChangeText={field.handleChange}
+              placeholder={t("auth.emailPlaceholder")}
               value={field.state.value}
             />
           )}
         </form.Field>
-        {isSignIn ? null : (
-          <form.Field name="phone">
-            {(field) => (
-              <Field
-                autoComplete="tel"
-                error={field.state.meta.errors[0]?.message}
-                keyboardType="phone-pad"
-                label={t("auth.phone")}
-                onBlur={field.handleBlur}
-                onChangeText={field.handleChange}
-                value={field.state.value}
-              />
-            )}
-          </form.Field>
-        )}
         <form.Field name="password">
           {(field) => (
             <Field
-              autoComplete={isSignIn ? "current-password" : "new-password"}
+              autoComplete="current-password"
               error={field.state.meta.errors[0]?.message}
               label={t("auth.password")}
               onBlur={field.handleBlur}
               onChangeText={field.handleChange}
+              onSubmitEditing={form.handleSubmit}
+              placeholder="••••••••"
               secureTextEntry
               value={field.state.value}
             />
           )}
         </form.Field>
-        {mode === "driver" ? (
-          <View className="gap-2">
-            <Text className="font-medium text-foreground text-sm">
-              {t("relation.title")}
-            </Text>
-            <Segment<Relation>
-              onChange={setRelation}
-              options={relations}
-              value={relation}
-            />
-          </View>
-        ) : null}
-        <form.Subscribe selector={(state) => state.isSubmitting}>
-          {(isSubmitting) => (
+        <View className="-mt-2 items-end">
+          <TextLink
+            label={t("auth.forgot")}
+            onPress={() => router.push("/mot-de-passe")}
+          />
+        </View>
+        <View className="mt-auto gap-2">
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <Action
+                isLoading={isSubmitting}
+                label={t("auth.signInAction")}
+                onPress={form.handleSubmit}
+              />
+            )}
+          </form.Subscribe>
+          {ENV.EXPO_PUBLIC_GOOGLE_SIGN_IN ? (
             <Action
-              isLoading={isSubmitting}
-              label={isSignIn ? t("auth.signIn") : t("auth.create")}
-              onPress={form.handleSubmit}
+              icon="logo-google"
+              label={t("auth.google")}
+              onPress={signInWithGoogle}
+              variant="secondary"
             />
-          )}
-        </form.Subscribe>
-      </View>
-    </Screen>
+          ) : null}
+          <TextLink
+            label={t("auth.createAccount")}
+            onPress={() => router.push("/inscription")}
+            prefix={t("auth.noAccount")}
+          />
+        </View>
+      </KeyboardAwareScrollView>
+    </SafeAreaView>
   );
 }

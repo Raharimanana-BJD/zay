@@ -2,7 +2,7 @@ import { useToast } from "heroui-native";
 import { useState } from "react";
 
 import { ReasonSheet } from "@/components/reason-sheet";
-import { Action } from "@/components/ui";
+import { Action, GroupRow } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
 import { useAction } from "@/lib/use-action";
 import { trpcClient } from "@/utils/trpc";
@@ -16,7 +16,14 @@ const REPORT_TYPES = [
   "other",
 ] as const;
 
-export function ReportButton({ bookingId }: { bookingId?: string }) {
+export function ReportButton({
+  bookingId,
+  asRow,
+}: {
+  bookingId?: string;
+  /** Drawn as a row of a profile list instead of a button. */
+  asRow?: boolean;
+}) {
   const { t } = useI18n();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -26,11 +33,20 @@ export function ReportButton({ bookingId }: { bookingId?: string }) {
   }>((input) => trpcClient.me.report.mutate({ ...input, bookingId }));
   return (
     <>
-      <Action
-        label={t("report.action")}
-        onPress={() => setOpen(true)}
-        variant="tertiary"
-      />
+      {asRow ? (
+        <GroupRow
+          isFirst
+          label={t("report.action")}
+          onPress={() => setOpen(true)}
+        />
+      ) : (
+        <Action
+          icon="flag-outline"
+          label={t("report.action")}
+          onPress={() => setOpen(true)}
+          variant="tertiary"
+        />
+      )}
       <ReasonSheet
         confirmLabel={t("report.send")}
         isLoading={report.isPending}

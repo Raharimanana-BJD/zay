@@ -3,7 +3,7 @@ import * as Location from "expo-location";
 import { Input, useToast } from "heroui-native";
 import { useRef, useState } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView } from "@/components/styled";
 
 import { Action, Body, Heading, Loading, Muted, Screen } from "@/components/ui";
 import { TOLIARA, ZayMap } from "@/components/zay-map";
@@ -132,8 +132,10 @@ export function PlacePicker({
   const query = search.trim().toLocaleLowerCase();
   const matches = (name: string) =>
     !query || name.toLocaleLowerCase().includes(query);
-  const landmarks = places.data?.landmarks.filter((row) => matches(row.name)) ?? [];
-  const districts = places.data?.districts.filter((row) => matches(row.name)) ?? [];
+  const landmarks =
+    places.data?.landmarks.filter((row) => matches(row.name)) ?? [];
+  const districts =
+    places.data?.districts.filter((row) => matches(row.name)) ?? [];
 
   const close = () => {
     setDraft(null);

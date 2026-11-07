@@ -1,20 +1,22 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect } from "expo-router";
-import { Input, Label, TextField, useToast } from "heroui-native";
+import { Spinner, useToast } from "heroui-native";
 import { useCallback, useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
+import { Field } from "@/components/auth-fields";
 import { Sheet } from "@/components/sheet";
 import {
   Action,
-  Card,
-  Heading,
+  INK,
   Loading,
   Muted,
   Notice,
-  Row,
+  Pill,
   Screen,
+  SectionLabel,
   Segment,
   Stepper,
   Title,
@@ -84,9 +86,86 @@ async function pickAndUpload(kind: "doc" | "photo"): Promise<string | null> {
   return body.key;
 }
 
+type Verification =
+  | "approved"
+  | "changes_requested"
+  | "pending"
+  | "rejected"
+  | "suspended";
+
+const PILL_TONE = {
+  approved: "success",
+  changes_requested: "brand",
+  pending: "brand",
+  rejected: "danger",
+  suspended: "danger",
+} as const;
+
+const TEXT_TONE = {
+  approved: "text-success",
+  changes_requested: "text-brand-ink",
+  pending: "text-brand-ink",
+  rejected: "text-danger",
+  suspended: "text-danger",
+} as const;
+
+const verification = (value: string): Verification =>
+  value in PILL_TONE ? (value as Verification) : "pending";
+
 function Status({ value }: { value: string }) {
   const { t } = useI18n();
   return <>{t(`verification.${value}` as TKey)}</>;
+}
+
+/** One required document: its state, and a button to send or replace it. */
+function DocumentRow({
+  label,
+  status,
+  isSending,
+  onSend,
+}: {
+  label: string;
+  status?: string;
+  isSending: boolean;
+  onSend: () => void;
+}) {
+  const { t } = useI18n();
+  const tone = status ? TEXT_TONE[verification(status)] : "text-brand-ink";
+  return (
+    <View className="min-h-20 flex-row items-center gap-4 rounded-3xl bg-surface p-4 shadow-black/5 shadow-sm">
+      <View className="size-12 items-center justify-center rounded-2xl bg-surface-tertiary">
+        <Ionicons color={INK} name="document-text-outline" size={20} />
+      </View>
+      <View className="flex-1 gap-0.5">
+        <Text className="font-bold text-base text-foreground" numberOfLines={2}>
+          {label}
+        </Text>
+        <Text className={`font-bold text-sm ${tone}`}>
+          {status ? <Status value={status} /> : t("dossier.missing")}
+        </Text>
+      </View>
+      <Pressable
+        accessibilityLabel={`${status ? t("dossier.replace") : t("dossier.send")}, ${label}`}
+        accessibilityRole="button"
+        accessibilityState={{ busy: isSending, disabled: isSending }}
+        className={`min-h-11 min-w-24 items-center justify-center rounded-xl px-4 active:opacity-80 ${
+          status ? "border border-border bg-surface" : "bg-foreground"
+        }`}
+        disabled={isSending}
+        onPress={onSend}
+      >
+        {isSending ? (
+          <Spinner color={status ? INK : "#ffffff"} size="sm" />
+        ) : (
+          <Text
+            className={`font-bold text-sm ${status ? "text-foreground" : "text-white"}`}
+          >
+            {status ? t("dossier.replace") : t("dossier.send")}
+          </Text>
+        )}
+      </Pressable>
+    </View>
+  );
 }
 
 export default function DossierScreen() {
@@ -171,23 +250,25 @@ export default function DossierScreen() {
   }
   const limit = form ? data.capacityLimits[form.category] : 1;
 
+  const overall = verification(data.verificationStatus);
+
   return (
     <Screen>
-      <Title>{t("nav.vehicle")}</Title>
-      <Card>
-        <Row
-          label={t("dossier.status")}
-          strong
-          value={<Status value={data.verificationStatus} />}
+      <View className="flex-row items-center justify-between gap-3">
+        <Title>{t("nav.vehicle")}</Title>
+        <Pill
+          label={t(`verificationShort.${overall}` as TKey)}
+          tone={PILL_TONE[overall]}
         />
-        {data.lastDecision?.reasonNote ? (
-          <Muted>{data.lastDecision.reasonNote}</Muted>
-        ) : null}
-      </Card>
+      </View>
       {data.verificationStatus === "changes_requested" ? (
         <Notice tone="warning">{t("dossier.changesRequested")}</Notice>
       ) : null}
-      <Heading>{t("relation.title")}</Heading>
+      {data.lastDecision?.reasonNote ? (
+        <Notice>{data.lastDecision.reasonNote}</Notice>
+      ) : null}
+
+      <SectionLabel>{t("relation.title")}</SectionLabel>
       <Segment<Relation>
         onChange={(value) => setRelation.mutate(value)}
         options={[
@@ -197,85 +278,112 @@ export default function DossierScreen() {
         ]}
         value={data.employmentRelation}
       />
-      <Heading>{t("dossier.vehicles")}</Heading>
-      {data.vehicles.length === 0 ? (
-        <Muted>{t("dossier.noVehicle")}</Muted>
-      ) : null}
-      {data.vehicles.map((vehicle) => (
-        <Card key={vehicle.id}>
-          <Text className="font-bold text-foreground text-lg">
-            {t(`category.${vehicle.category}` as TKey)} ·{" "}
-            {[vehicle.make, vehicle.model].filter(Boolean).join(" ")}
+
+      <SectionLabel>{t("dossier.vehicles")}</SectionLabel>
+      <View className="gap-4 rounded-3xl bg-surface p-5 shadow-black/5 shadow-sm">
+        {data.vehicles.length === 0 ? (
+          <Muted>{t("dossier.noVehicle")}</Muted>
+        ) : null}
+        {data.vehicles.map((vehicle) => {
+          const isActive = data.activeVehicleId === vehicle.id;
+          const state = verification(vehicle.verificationStatus);
+          return (
+            <View
+              className={`gap-3 rounded-2xl border p-4 ${isActive ? "border-foreground" : "border-border"}`}
+              key={vehicle.id}
+            >
+              <View className="flex-row items-start gap-3">
+                <View className="size-11 items-center justify-center rounded-full bg-brand">
+                  <Ionicons
+                    color={INK}
+                    name={vehicle.category === "car" ? "car" : "bicycle"}
+                    size={20}
+                  />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-bold text-base text-foreground">
+                    {[vehicle.make, vehicle.model].filter(Boolean).join(" ")}
+                  </Text>
+                  <Muted>
+                    {[
+                      t(`category.${vehicle.category}` as TKey),
+                      vehicle.registration,
+                      t("offer.seats", { n: vehicle.capacity }),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </Muted>
+                </View>
+                <Pill
+                  label={t(`verificationShort.${state}` as TKey)}
+                  tone={PILL_TONE[state]}
+                />
+              </View>
+              <View className="flex-row gap-2">
+                <View className="flex-1">
+                  {isActive ? (
+                    <View className="min-h-14 flex-row items-center justify-center gap-2 rounded-2xl bg-surface-tertiary">
+                      <Ionicons color={INK} name="checkmark-circle" size={18} />
+                      <Text className="font-bold text-foreground">
+                        {t("dossier.inUse")}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Action
+                      label={t("dossier.useVehicle")}
+                      onPress={() => setActive.mutate(vehicle.id)}
+                    />
+                  )}
+                </View>
+                <Action
+                  label={t("common.edit")}
+                  onPress={() =>
+                    setForm({
+                      id: vehicle.id,
+                      category: vehicle.category,
+                      make: vehicle.make ?? "",
+                      model: vehicle.model,
+                      registration: vehicle.registration ?? "",
+                      capacity: vehicle.capacity,
+                      photoKey: vehicle.photoKey?.startsWith("up-photo-")
+                        ? vehicle.photoKey
+                        : undefined,
+                    })
+                  }
+                  variant="secondary"
+                />
+              </View>
+            </View>
+          );
+        })}
+        <Pressable
+          accessibilityRole="button"
+          className="min-h-14 flex-row items-center justify-center gap-2 rounded-2xl border border-border border-dashed active:bg-surface-tertiary"
+          onPress={() => setForm(EMPTY_VEHICLE)}
+        >
+          <Ionicons color={INK} name="add" size={20} />
+          <Text className="font-bold text-base text-foreground">
+            {t("dossier.addVehicle")}
           </Text>
-          {vehicle.registration ? <Muted>{vehicle.registration}</Muted> : null}
-          <Row
-            label={t("dossier.capacity")}
-            value={t("offer.seats", { n: vehicle.capacity })}
-          />
-          <Row
-            label={t("dossier.status")}
-            value={<Status value={vehicle.verificationStatus} />}
-          />
-          {data.activeVehicleId === vehicle.id ? (
-            <Text className="font-medium text-foreground">
-              {t("dossier.inUse")}
-            </Text>
-          ) : (
-            <Action
-              label={t("dossier.useVehicle")}
-              onPress={() => setActive.mutate(vehicle.id)}
-              variant="secondary"
-            />
-          )}
-          <Action
-            label={t("common.edit")}
-            onPress={() =>
-              setForm({
-                id: vehicle.id,
-                category: vehicle.category,
-                make: vehicle.make ?? "",
-                model: vehicle.model,
-                registration: vehicle.registration ?? "",
-                capacity: vehicle.capacity,
-                photoKey: vehicle.photoKey?.startsWith("up-photo-")
-                  ? vehicle.photoKey
-                  : undefined,
-              })
-            }
-            variant="tertiary"
-          />
-        </Card>
-      ))}
-      <Action
-        label={t("dossier.addVehicle")}
-        onPress={() => setForm(EMPTY_VEHICLE)}
-        variant="secondary"
-      />
-      <Heading>{t("dossier.documents")}</Heading>
+        </Pressable>
+      </View>
+
+      <SectionLabel>{t("dossier.documents")}</SectionLabel>
       <Muted>{t("dossier.documentsHint")}</Muted>
-      {data.requiredDocuments.map((typeCode) => {
-        const document = data.documents.find((d) => d.typeCode === typeCode);
-        return (
-          <Card key={typeCode}>
-            <Row
+      <View className="gap-3">
+        {data.requiredDocuments.map((typeCode) => {
+          const document = data.documents.find((d) => d.typeCode === typeCode);
+          return (
+            <DocumentRow
+              isSending={uploading === typeCode}
+              key={typeCode}
               label={t(`document.${typeCode}` as TKey)}
-              value={
-                document ? (
-                  <Status value={document.verificationStatus} />
-                ) : (
-                  t("dossier.missing")
-                )
-              }
+              onSend={() => uploadDocument(typeCode)}
+              status={document?.verificationStatus}
             />
-            <Action
-              isLoading={uploading === typeCode}
-              label={document ? t("dossier.replace") : t("dossier.send")}
-              onPress={() => uploadDocument(typeCode)}
-              variant="secondary"
-            />
-          </Card>
-        );
-      })}
+          );
+        })}
+      </View>
       <Sheet
         onClose={() => setForm(null)}
         title={form?.id ? t("common.edit") : t("dossier.addVehicle")}
@@ -300,36 +408,30 @@ export default function DossierScreen() {
               ]}
               value={form.category}
             />
-            <TextField>
-              <Label>{t("dossier.make")}</Label>
-              <Input
-                onChangeText={(make) => setForm({ ...form, make })}
-                value={form.make}
-              />
-            </TextField>
-            <TextField>
-              <Label>{t("dossier.model")}</Label>
-              <Input
-                onChangeText={(model) => setForm({ ...form, model })}
-                value={form.model}
-              />
-            </TextField>
-            <TextField>
-              <Label>{t("dossier.registration")}</Label>
-              <Input
-                autoCapitalize="characters"
-                onChangeText={(registration) =>
-                  setForm({ ...form, registration })
-                }
-                value={form.registration}
-              />
-            </TextField>
-            <Muted>{t("dossier.capacity")}</Muted>
+            <Field
+              label={t("dossier.make")}
+              onChangeText={(make) => setForm({ ...form, make })}
+              value={form.make}
+            />
+            <Field
+              label={t("dossier.model")}
+              onChangeText={(model) => setForm({ ...form, model })}
+              value={form.model}
+            />
+            <Field
+              autoCapitalize="characters"
+              label={t("dossier.registration")}
+              onChangeText={(registration) =>
+                setForm({ ...form, registration })
+              }
+              value={form.registration}
+            />
             <Stepper
-              label={t("offer.seats", { n: form.capacity })}
+              label={String(form.capacity)}
               max={limit}
               min={1}
               onChange={(capacity) => setForm({ ...form, capacity })}
+              title={t("dossier.capacity")}
               value={form.capacity}
             />
             <Action
