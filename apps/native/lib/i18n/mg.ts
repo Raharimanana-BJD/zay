@@ -18,6 +18,15 @@ export const mg: Record<keyof typeof fr, string> = {
   "common.retry": "Andramo indray",
   "common.save": "Tehirizo",
 
+  "map.center": "Hiverina amin'ny toerako",
+  "map.close": "Hanidy ny sarintany",
+  "map.expand": "Hanitatra ny sarintany",
+  "map.fitAll": "Hijery ny lalana manontolo",
+  "map.noPosition": "Tsy hita ny toerana",
+  "map.offline": "Tsy mifandray",
+  "map.zoomIn": "Hanakaiky",
+  "map.zoomOut": "Hanalavitra",
+
   "nav.book": "Hamandrika",
   "nav.earnings": "Vola miditra",
   "nav.home": "Fandraisana",
@@ -105,6 +114,7 @@ export const mg: Record<keyof typeof fr, string> = {
   "offer.timeLeft": "Segondra {n} hamaliana",
   "offer.waitingDriver": "Miandry ny mpamily ho an'ny {amount}",
 
+  "splash.loading": "Manokatra an'i Zay",
   "tracking.call": "Antsoy ny mpamily",
   "tracking.callClient": "Antsoy ny mpanjifa",
   "tracking.none": "Mbola tsy voaray ny toeran'ny mpamily.",

@@ -9,6 +9,7 @@ import { Linking, ScrollView, Text, View } from "react-native";
 import { AuthImage } from "@/components/auth-image";
 import { OfflineBanner } from "@/components/offline-banner";
 import {
+  currentPlace,
   type Place,
   PlacePicker,
   toPlaceInput,
@@ -509,7 +510,18 @@ export default function BookingScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top", "bottom"]}>
       <View className="h-[30%]">
-        <ZayMap label={t("home.map")} markers={markers} />
+        <ZayMap
+          fullscreen={{
+            summary: {
+              title: t(`status.${booking.status}` as TKey),
+              detail: `${booking.pickup.label} → ${booking.destination.label}`,
+              value: formatAr(booking.agreedPriceAr),
+            },
+            locate: () => currentPlace(t("place.myPosition")),
+          }}
+          label={t("home.map")}
+          markers={markers}
+        />
       </View>
       <ScrollView
         contentContainerClassName="gap-3 p-4 pb-8"

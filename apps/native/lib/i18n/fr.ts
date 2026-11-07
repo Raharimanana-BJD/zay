@@ -16,6 +16,15 @@ export const fr = {
   "common.retry": "Réessayer",
   "common.save": "Enregistrer",
 
+  "map.center": "Me recentrer",
+  "map.close": "Fermer la carte",
+  "map.expand": "Agrandir la carte",
+  "map.fitAll": "Voir tout le trajet",
+  "map.noPosition": "Position introuvable",
+  "map.offline": "Hors ligne",
+  "map.zoomIn": "Zoom avant",
+  "map.zoomOut": "Zoom arrière",
+
   "nav.book": "Réserver",
   "nav.earnings": "Revenus",
   "nav.home": "Accueil",
@@ -104,6 +113,7 @@ export const fr = {
   "offer.timeLeft": "{n} secondes pour répondre",
   "offer.waitingDriver": "En attente du chauffeur pour {amount}",
 
+  "splash.loading": "Ouverture de Zay",
   "tracking.call": "Appeler le chauffeur",
   "tracking.callClient": "Appeler le client",
   "tracking.none": "Position du chauffeur pas encore reçue.",

@@ -4,6 +4,7 @@ import { useToast } from "heroui-native";
 import { useState } from "react";
 import { Linking, ScrollView, View } from "react-native";
 import { OfflineBanner } from "@/components/offline-banner";
+import { currentPlace } from "@/components/place-picker";
 import { ReasonSheet } from "@/components/reason-sheet";
 import { ReportButton } from "@/components/report-button";
 import { SafeAreaView } from "@/components/styled";
@@ -169,7 +170,19 @@ export default function RideScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top", "bottom"]}>
       <View className="h-[30%]">
-        <ZayMap label={t("home.map")} markers={markers} />
+        <ZayMap
+          fullscreen={{
+            summary: {
+              title: t(`status.${ride.status}` as TKey),
+              detail: `${ride.pickup} → ${ride.destination}`,
+              value: formatAr(ride.agreedPriceAr),
+            },
+            // The home tab already sends the position; this only reads it once.
+            locate: () => currentPlace(t("place.myPosition")),
+          }}
+          label={t("home.map")}
+          markers={markers}
+        />
       </View>
       <ScrollView contentContainerClassName="gap-3 p-4 pb-8">
         <OfflineBanner />

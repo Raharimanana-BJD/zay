@@ -152,7 +152,7 @@ spec [0005](../../specs/_root/0005-retouches-interface-mobile/index.md) · code 
 **Done when:** l'app s'ouvre sur le splash jaune animé, chaque carte s'agrandit, un nouvel utilisateur s'inscrit par Google puis complète son téléphone, chacun a sa photo, et un chauffeur envoie ses papiers en PDF d'un seul bouton pendant que l'équipe les lit et date leur expiration.
 - [x] Design it (spec): `/architect retouches de l'interface mobile`
 - [ ] Build it: `/develop retouches de l'interface mobile`
-  - [ ] Onglets en icônes, splash animé, carte plein écran (AC-1 à AC-4)
+  - [x] Onglets en icônes, splash animé, carte plein écran (AC-1 à AC-4)
   - [ ] Serveur de fichiers et photo de profil (AC-5 à AC-7, AC-14)
   - [ ] Téléphone facultatif, inscription Google et écran de complétion (AC-8 à AC-11)
   - [ ] Documents chauffeur : PDF, envoi groupé, bloc refait, back office et expiration (AC-12 à AC-17)

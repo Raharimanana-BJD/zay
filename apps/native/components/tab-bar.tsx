@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { type IconName, INK } from "@/components/ui";
@@ -13,7 +13,7 @@ type TabBarProps = Parameters<
 const INACTIVE = "#a8a49b";
 const BOTTOM_GAP = 12;
 
-/** The floating white bar of the design, a yellow dot under the open tab. */
+/** The floating white bar: icons only, a yellow dot under the open tab (spec 0005, AC-2). */
 export function ZayTabBar({
   state,
   descriptors,
@@ -53,7 +53,7 @@ export function ZayTabBar({
               accessibilityLabel={label}
               accessibilityRole="tab"
               accessibilityState={{ selected: focused }}
-              className="min-h-16 flex-1 items-center justify-center gap-1 rounded-3xl active:bg-surface-tertiary"
+              className="min-h-14 flex-1 items-center justify-center gap-1.5 rounded-3xl active:bg-surface-tertiary"
               key={route.key}
               onPress={onPress}
             >
@@ -62,14 +62,8 @@ export function ZayTabBar({
                 name={
                   focused ? (icon.replace("-outline", "") as IconName) : icon
                 }
-                size={22}
+                size={24}
               />
-              <Text
-                className={`font-bold text-xs ${focused ? "text-foreground" : "text-field-placeholder"}`}
-                numberOfLines={1}
-              >
-                {label}
-              </Text>
               <View
                 className={`size-1.5 rounded-full ${focused ? "bg-brand" : "bg-transparent"}`}
               />
