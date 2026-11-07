@@ -40,7 +40,14 @@ await maintenance.execute(sql.raw(`CREATE DATABASE ${SCRATCH_DB}`));
 
 const db = createDb({ ...ENV, DATABASE_URL: scratchUrl.toString() });
 await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
-const auth = createAuth(ENV, db);
+// This script checks the data rules, not mail: sign up opens a session at once.
+const auth = createAuth(ENV, db, {
+  mailer: {
+    sendOtp: async () => undefined,
+    sendWelcome: async () => undefined,
+  },
+  requireEmailVerification: false,
+});
 
 const settings = one(
   await db

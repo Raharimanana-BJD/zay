@@ -132,7 +132,7 @@ async function accountId(
       password,
       name,
       role: role as "admin",
-      data: { phone, locale: "fr" },
+      data: { phone, locale: "fr", emailVerified: true },
     },
   });
   return created.user.id;

@@ -16,7 +16,7 @@ The Better Auth setup, with email and password sign in, the Expo plugin and the 
 
 ## Gotchas
 
-- Every HTTP route of the admin plugin is closed through `CLOSED_ADMIN_PATHS`. The server calls these actions through `auth.api`, after its own role checks.
+- Every HTTP route of the admin plugin is closed through `CLOSED_PATHS`, with the email OTP sign in and email change routes. The server calls these actions through `auth.api`, after its own role checks.
 - The role cannot be chosen at sign up. Every new account starts as `client`.
 - `trustedOrigins` holds fixed values next to `CORS_ORIGIN`: `zay-app://`, `exp://` and `http://localhost:8081`. A new app scheme or client origin has to be added here, or its sign in requests are rejected.
 - Cookies are set with `SameSite=None` and `Secure`, so the deployed server has to use HTTPS.

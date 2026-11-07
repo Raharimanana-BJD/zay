@@ -61,7 +61,7 @@ const created = await auth.api.createUser({
     password,
     name: values.name.trim(),
     role: "admin",
-    data: { phone: phone.data, locale: "fr" },
+    data: { phone: phone.data, locale: "fr", emailVerified: true },
   },
 });
 
