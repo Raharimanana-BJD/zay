@@ -266,6 +266,11 @@ const ERROR_LABELS: Record<string, string> = {
   FORBIDDEN: "Vous n'avez pas accès à cette action.",
   INVALID_EMAIL_OR_PASSWORD: "Email ou mot de passe incorrect.",
   INVALID_PASSWORD: "Le mot de passe actuel est incorrect.",
+  INVALID_OTP: "Code incorrect. Vérifiez l'email reçu.",
+  OTP_EXPIRED: "Code expiré. Demandez un nouveau code.",
+  TOO_MANY_ATTEMPTS: "Trop d'essais. Demandez un nouveau code.",
+  EMAIL_NOT_VERIFIED:
+    "Adresse email non vérifiée. Utilisez « Mot de passe oublié » pour recevoir un code.",
   NOT_A_TEAM_ACCOUNT: "Ce compte ne fait pas partie de l'équipe.",
   NOT_FOUND: "Cet élément est introuvable.",
   NOTE_REQUIRED: "Une note est obligatoire.",

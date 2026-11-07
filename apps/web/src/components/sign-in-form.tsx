@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@zay-app/ui/components/button";
 import { Input } from "@zay-app/ui/components/input";
 import { Label } from "@zay-app/ui/components/label";
@@ -67,7 +67,15 @@ export default function SignInForm() {
       <form.Field name="password">
         {(field) => (
           <div className="grid gap-2">
-            <Label htmlFor={field.name}>Mot de passe</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor={field.name}>Mot de passe</Label>
+              <Link
+                className="text-muted-foreground text-sm underline-offset-4 hover:underline"
+                to="/mot-de-passe-oublie"
+              >
+                Mot de passe oublié ?
+              </Link>
+            </div>
             <Input
               aria-describedby={`${field.name}-error`}
               aria-invalid={field.state.meta.errors.length > 0}

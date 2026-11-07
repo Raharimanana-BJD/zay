@@ -9,21 +9,64 @@ import {
   getSessionFromCtx,
 } from "better-auth/api";
 import { admin } from "better-auth/plugins/admin";
+import { emailOTP } from "better-auth/plugins/email-otp";
 import z from "zod";
 
 export type AuthConfig = {
   BETTER_AUTH_URL: string;
   BETTER_AUTH_SECRET: string;
   CORS_ORIGIN: string;
+  /** Google sign in is on only when both values are set. */
+  GOOGLE_CLIENT_ID?: string | undefined;
+  GOOGLE_CLIENT_SECRET?: string | undefined;
 };
+
+type MailLocale = "fr" | "mg";
+
+/**
+ * What the auth needs to send mail. `apps/server` passes the mailer from
+ * `@zay-app/email`, so this package never knows about SMTP.
+ */
+export type AuthMailer = {
+  sendOtp: (input: {
+    to: string;
+    code: string;
+    purpose: "email-verification" | "forget-password";
+    locale: MailLocale;
+    expiresInMinutes: number;
+  }) => Promise<void>;
+  sendWelcome: (input: {
+    to: string;
+    name: string;
+    locale: MailLocale;
+  }) => Promise<void>;
+};
+
+export type AuthOptions = {
+  mailer: AuthMailer;
+  desktopOrigins?: readonly string[];
+  /** Only test scripts turn this off, to sign up and act at once. */
+  requireEmailVerification?: boolean;
+};
+
+const OTP_MINUTES = 10;
+const OTP_ATTEMPTS = 3;
+const SECONDS_PER_MINUTE = 60;
+
+const toMailLocale = (value: unknown): MailLocale =>
+  value === "mg" ? "mg" : "fr";
 
 const E164_PHONE = /^\+[1-9]\d{7,14}$/;
 const SIGN_UP_PATH = "/sign-up/email";
 const UPDATE_USER_PATH = "/update-user";
 
-// Every HTTP route of the admin plugin stays closed. The server reaches these
-// actions through `auth.api`, after its own role checks in `@zay-app/api`.
-const CLOSED_ADMIN_PATHS = [
+// Passwordless sign in and email change are not part of the product. Every HTTP
+// route of the admin plugin stays closed too: the server reaches these actions
+// through `auth.api`, after its own role checks in `@zay-app/api`.
+const CLOSED_PATHS = [
+  "/sign-in/email-otp",
+  "/email-otp/request-email-change",
+  "/email-otp/change-email",
   "/admin/ban-user",
   "/admin/create-user",
   "/admin/get-user",
@@ -50,8 +93,20 @@ const phoneTakenError = () =>
 export function createAuth(
   env: AuthConfig,
   database: Database,
-  desktopOrigins: readonly string[] = []
+  { mailer, desktopOrigins = [], requireEmailVerification = true }: AuthOptions
 ) {
+  const google =
+    env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+      ? {
+          google: {
+            clientId: env.GOOGLE_CLIENT_ID,
+            clientSecret: env.GOOGLE_CLIENT_SECRET,
+            // The phone stays required, so Google only opens existing accounts.
+            disableImplicitSignUp: true,
+          },
+        }
+      : undefined;
+
   return betterAuth({
     database: drizzleAdapter(database, {
       provider: "pg",
@@ -64,10 +119,36 @@ export function createAuth(
       "exp://",
       "http://localhost:8081",
     ],
-    emailAndPassword: { enabled: true },
+    emailAndPassword: {
+      enabled: true,
+      minPasswordLength: 8,
+      requireEmailVerification,
+      revokeSessionsOnPasswordReset: true,
+    },
+    emailVerification: {
+      sendOnSignUp: requireEmailVerification,
+      sendOnSignIn: requireEmailVerification,
+      autoSignInAfterVerification: true,
+      afterEmailVerification: async (user) => {
+        const { locale } = user as { locale?: unknown };
+        await mailer
+          .sendWelcome({
+            to: user.email,
+            name: user.name,
+            locale: toMailLocale(locale),
+          })
+          .catch(() => {
+            // A lost welcome mail never blocks the account.
+          });
+      },
+    },
+    socialProviders: google,
+    account: {
+      accountLinking: { enabled: true, trustedProviders: ["google"] },
+    },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
-    disabledPaths: CLOSED_ADMIN_PATHS,
+    disabledPaths: CLOSED_PATHS,
     advanced: {
       defaultCookieAttributes: {
         sameSite: "none",
@@ -154,7 +235,42 @@ export function createAuth(
         }
       }),
     },
-    plugins: [expo(), admin({ defaultRole: "client" })],
+    plugins: [
+      expo(),
+      admin({ defaultRole: "client" }),
+      emailOTP({
+        otpLength: 6,
+        expiresIn: OTP_MINUTES * SECONDS_PER_MINUTE,
+        allowedAttempts: OTP_ATTEMPTS,
+        storeOTP: "hashed",
+        disableSignUp: true,
+        overrideDefaultEmailVerification: true,
+        sendVerificationOTP: async ({ email, otp, type }, ctx) => {
+          if (type !== "email-verification" && type !== "forget-password") {
+            return;
+          }
+          const owner = await ctx?.context.adapter.findOne<{
+            locale?: string;
+          }>({
+            model: "user",
+            where: [{ field: "email", value: email.toLowerCase() }],
+            select: ["locale"],
+          });
+          // Not awaited, so the answer time does not reveal if the mail left.
+          mailer
+            .sendOtp({
+              to: email,
+              code: otp,
+              purpose: type,
+              locale: toMailLocale(owner?.locale),
+              expiresInMinutes: OTP_MINUTES,
+            })
+            .catch((error: unknown) => {
+              ctx?.context.logger.error("Failed to send an OTP email", error);
+            });
+        },
+      }),
+    ],
   });
 }
 

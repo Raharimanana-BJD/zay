@@ -95,7 +95,8 @@ export const teamRouter = router({
             email,
             password: temporaryPassword,
             role: role as "admin",
-            data: { phone: phone.data, locale: "fr" },
+            // The team vouches for the address, so no verification code is needed.
+            data: { phone: phone.data, locale: "fr", emailVerified: true },
           },
         });
         id = created.user.id;

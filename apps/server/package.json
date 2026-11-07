@@ -22,6 +22,7 @@
     "@zay-app/api": "workspace:*",
     "@zay-app/auth": "workspace:*",
     "@zay-app/db": "workspace:*",
+    "@zay-app/email": "workspace:*",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "hono": "^4.13.7",

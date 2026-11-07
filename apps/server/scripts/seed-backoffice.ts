@@ -270,6 +270,7 @@ async function createAccount(
       data: {
         phone: `+2613499${String(phoneCounter).padStart(5, "0")}`,
         locale: "fr",
+        emailVerified: true,
         ...extra,
       },
     },
