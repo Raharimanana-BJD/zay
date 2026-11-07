@@ -20,7 +20,13 @@ La stack est dans `docker-compose.prod.yml` : PostgreSQL avec PostGIS, les migra
    API_DOMAIN=api.zay.exemple.com
    WEB_DOMAIN=zay.exemple.com
    VITE_CARTO_API_KEY=  # clé CARTO, à demander sur https://carto.com/basemaps/apikey/
+   SMTP_URL=            # smtp://<utilisateur>:<mot de passe>@<hôte>:<port> ; le @ d'une adresse email s'écrit %40
+   MAIL_FROM=           # par exemple : Zay <adresse@gmail.com>
+   GOOGLE_CLIENT_ID=    # facultatif : connexion Google (spec 0004 et 0005)
+   GOOGLE_CLIENT_SECRET=
    ```
+
+   Pour Gmail : `SMTP_URL=smtp://adresse%40gmail.com:<mot de passe d'application>@smtp.gmail.com:587`. Le mot de passe d'application se crée sur https://myaccount.google.com/apppasswords (la validation en deux étapes doit être active). Gmail limite l'envoi à environ 500 emails par jour.
 
 4. Dans **Domains**, ajouter deux domaines, avec HTTPS et Let's Encrypt :
 
