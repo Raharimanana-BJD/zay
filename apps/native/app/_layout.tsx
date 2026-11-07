@@ -1,14 +1,16 @@
 import "@/global.css";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Stack } from "expo-router";
+import { preventAutoHideAsync } from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { HeroUINativeProvider } from "heroui-native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { Uniwind } from "uniwind";
 
+import { BootSplash } from "@/components/splash";
 import { Action, Loading, Screen, Title } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 import { I18nProvider, type Locale, useI18n } from "@/lib/i18n";
@@ -16,6 +18,8 @@ import { RegisteringContext } from "@/lib/registering";
 import { queryClient, trpc } from "@/utils/trpc";
 
 Uniwind.setTheme("light");
+// The native splash stays until BootSplash, its animated copy, is drawn (spec 0005).
+preventAutoHideAsync().catch(() => undefined);
 
 function StaffNotice() {
   const { t } = useI18n();
@@ -47,12 +51,45 @@ function Routes() {
     }
   }, [savedLocale, setLocale]);
 
-  if (isPending) {
+  const [splashGone, setSplashGone] = useState(false);
+  const hideSplash = useCallback(() => setSplashGone(true), []);
+  const isSignedIn = Boolean(session);
+  // At startup the role comes from me.get, so the splash waits for it, unless it fails.
+  const booting = isPending || (isSignedIn && me.isPending && !me.isError);
+
+  return (
+    <>
+      <RouteContent
+        isSignedIn={isSignedIn}
+        isWaiting={splashGone ? isPending : booting}
+        registering={registering}
+        // The server's answer wins. The stored session keeps a ride reachable when offline.
+        role={me.data?.role ?? session?.user.role}
+        setRegistering={setRegistering}
+      />
+      {splashGone ? null : (
+        <BootSplash onHidden={hideSplash} ready={!booting} />
+      )}
+    </>
+  );
+}
+
+function RouteContent({
+  isWaiting,
+  isSignedIn,
+  registering,
+  role,
+  setRegistering,
+}: {
+  isWaiting: boolean;
+  isSignedIn: boolean;
+  registering: boolean;
+  role: string | null | undefined;
+  setRegistering: (value: boolean) => void;
+}) {
+  if (isWaiting) {
     return <Loading />;
   }
-  // The server's answer wins. The stored session keeps a ride reachable when offline.
-  const role = me.data?.role ?? session?.user.role;
-  const isSignedIn = Boolean(session);
   if (isSignedIn && !registering && role !== "client" && role !== "driver") {
     return role ? <StaffNotice /> : <Loading />;
   }
