@@ -392,4 +392,11 @@ export const mg: Record<keyof typeof fr, string> = {
   "auth.passwordMismatch": "Tsy mitovy ireo teny miafina roa",
   "auth.driverHint":
     "Ao amin'ny antontan-taratasinao no hanondroanao ny fiaranao sy ny taratasinao.",
+  "photo.title": "Sarin'ny mombamomba",
+  "photo.edit": "Hanova ny sarin'ny mombamomba",
+  "photo.take": "Haka sary",
+  "photo.pick": "Hisafidy ao amin'ny galerie",
+  "photo.remove": "Hanala ny sary",
+  "errors.CAMERA_DENIED":
+    "Avelao hampiasaina ny fakan-tsary ao amin'ny paramètres, na misafidiana sary ao amin'ny galerie.",
 };

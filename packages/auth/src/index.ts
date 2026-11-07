@@ -186,6 +186,14 @@ export function createAuth(
         }
         const body = (ctx.body ?? {}) as { phone?: unknown };
 
+        // The photo is a file key only `me.setImage` checks and writes (spec 0005).
+        if ("image" in body) {
+          throw new APIError("BAD_REQUEST", {
+            code: "IMAGE_NOT_ALLOWED",
+            message: "The profile photo is changed through me.setImage.",
+          });
+        }
+
         // Better Auth only rejects a truthy role, so an empty one needs this check.
         if (ctx.path === SIGN_UP_PATH && "role" in body) {
           throw new APIError("BAD_REQUEST", {

@@ -187,6 +187,7 @@ async function readAssignedDriver(
     .select({
       name: user.name,
       phone: user.phone,
+      image: user.image,
       category: vehicle.category,
       make: vehicle.make,
       model: vehicle.model,
@@ -202,11 +203,12 @@ async function readAssignedDriver(
   if (!row) {
     return null;
   }
-  const { point, receivedAt, photoKey, ...driver } = row;
+  const { point, receivedAt, photoKey, image, ...driver } = row;
   const ageS = receivedAt ? positionAgeS(receivedAt, now) : null;
   return {
     ...driver,
     photoUrl: await photoUrl(photoKey),
+    imageUrl: await photoUrl(image),
     position:
       point && ageS !== null
         ? {

@@ -2,7 +2,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useToast } from "heroui-native";
 import { useState } from "react";
-import { Linking, ScrollView, View } from "react-native";
+import { Linking, ScrollView, Text, View } from "react-native";
+
+import { Avatar } from "@/components/auth-image";
 import { OfflineBanner } from "@/components/offline-banner";
 import { currentPlace } from "@/components/place-picker";
 import { ReasonSheet } from "@/components/reason-sheet";
@@ -216,7 +218,15 @@ export default function RideScreen() {
           </Card>
         ) : null}
         <Card>
-          <Row label={t("ride.client")} value={ride.clientName} />
+          <View className="flex-row items-center gap-3">
+            <Avatar name={ride.clientName} uri={ride.clientImageUrl} />
+            <View className="flex-1">
+              <Muted>{t("ride.client")}</Muted>
+              <Text className="font-bold text-foreground text-lg">
+                {ride.clientName}
+              </Text>
+            </View>
+          </View>
           <Row label={t("home.pickup")} value={ride.pickup} />
           {ride.pickupNote ? <Muted>{ride.pickupNote}</Muted> : null}
           <Row label={t("home.destination")} value={ride.destination} />

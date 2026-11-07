@@ -6,7 +6,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Spinner, useToast } from "heroui-native";
 import { useEffect, useRef, useState } from "react";
 import { Linking, ScrollView, Text, View } from "react-native";
-import { AuthImage } from "@/components/auth-image";
+import { AuthImage, Avatar } from "@/components/auth-image";
 import { OfflineBanner } from "@/components/offline-banner";
 import {
   currentPlace,
@@ -271,9 +271,7 @@ function ActiveRide({
       {driver ? (
         <Card>
           <View className="flex-row items-center gap-3">
-            {driver.photoUrl ? (
-              <AuthImage label={driver.model} uri={driver.photoUrl} />
-            ) : null}
+            <Avatar name={driver.name} uri={driver.imageUrl} />
             <View className="flex-1">
               <Text className="font-bold text-foreground text-lg">
                 {driver.name}
@@ -284,6 +282,9 @@ function ActiveRide({
                 {driver.registration ? ` · ${driver.registration}` : ""}
               </Muted>
             </View>
+            {driver.photoUrl ? (
+              <AuthImage label={driver.model} uri={driver.photoUrl} />
+            ) : null}
           </View>
           <Row
             label={t("booking.agreed")}

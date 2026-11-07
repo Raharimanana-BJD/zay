@@ -21,6 +21,31 @@ Needs a new native build (`bun run android` in `apps/native`), because the nativ
 - [ ] Location permission refused, tap recenter → "Position introuvable" shows and the map does not move → AC-4
 - [ ] Summary card: Réserver shows the estimated distance and the price of the chosen category (automatic → lowest), nothing before a quote; ride tracking shows status, route and agreed price; driver home shows "En ligne" or "Hors ligne", or the new request with its route and price → AC-4
 
+### Milestone 2: serveur de fichiers et photo de profil (AC-5 à AC-7, AC-14)
+
+No new native build needed (no new native module). Restart the dev server so the new `/files` routes load.
+
+- [ ] Profile, tap the avatar → a sheet with "Prendre une photo · Choisir dans la galerie", and no "Retirer la photo" while there is no photo → AC-5
+- [ ] Choose a gallery photo → a square crop opens, then a spinner on the avatar, then the new photo shows at once → AC-5
+- [ ] Change the photo again → the new one shows, and the previous `up-avatar-…` file is gone from `apps/server/uploads/` → AC-5
+- [ ] With a photo, open the sheet → "Retirer la photo" is there; tap it → the initial comes back, the file is gone from disk → AC-5
+- [ ] Take a photo with the camera permission refused → the toast asks to allow the camera or use the gallery → AC-5
+- [ ] Send an image over 5 MB as an avatar → "Cette image est trop lourde.", the old photo stays → AC-5
+- [ ] Client and driver both with a photo, ride accepted → the client tracking screen shows the driver's photo next to the name, the driver ride screen shows the client's photo → AC-6
+- [ ] Same ride, one side without a photo → that side shows the first letter of the name → AC-6
+- [ ] Ride completed or cancelled → the same avatar URL now answers 403, and the screens fall back to the initial → AC-6, AC-7
+- [ ] A third client opens someone's avatar URL → 403 · no session → 401 · the team (admin or support) → 200 → AC-7
+- [ ] Driver sends a PDF document through `POST /files/doc` → 201 with an `up-doc-….pdf` key; over 10 MB → 413 `FILE_TOO_LARGE`; a text file → 415 `FILE_TYPE_NOT_ALLOWED` → AC-14
+- [ ] Driver reads their own document → 200; another driver reads it → 403; every file answer carries `Content-Security-Policy: sandbox` → AC-14
+- [ ] `POST /api/auth/update-user` with an `image` field → 400 `IMAGE_NOT_ALLOWED` → AC-5
+
+### Value sourcing (spec 0002)
+- [ ] Profile photo comes from `me.get.imageUrl`: set `user.image` to null in the database → the profile shows the initial
+- [ ] Initial fallback: rename the account to "élodie" → the avatar shows "É"
+- [ ] Driver photo on tracking comes from the assigned driver: reassign the ride to another driver → the photo follows the new driver
+- [ ] Client photo on the driver ride comes from `driver.ride.clientImageUrl` ← the client's `user.image`
+- [ ] The crop is square with quality 0.6: the stored file is square and well under 1 MB for a phone photo
+
 ## Commands
 - [ ] `bunx tsc --noEmit -p apps/native` → no errors → AC-1 to AC-4
 
@@ -31,4 +56,5 @@ Needs a new native build (`bun run android` in `apps/native`), because the nativ
 
 ## Acceptance-criteria coverage
 - AC-1: splash steps · AC-2: tab bar steps · AC-3: expand, close, live update steps · AC-4: controls, refused position, summary steps
-- AC-5 to AC-17: not built yet (milestones 2 to 4)
+- AC-5: profile sheet, crop, change, remove, size steps · AC-6: ride photo steps · AC-7: access steps · AC-14: PDF document steps
+- AC-8 to AC-13, AC-15 to AC-17: not built yet (milestones 3 and 4)

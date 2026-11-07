@@ -7,8 +7,23 @@ import { eq, isNull } from "drizzle-orm";
 import z from "zod";
 
 import { REPORT_TYPES } from "../domain/codes";
+import { type FileAccess, isOwnAvatarKey } from "../domain/files";
 import { protectedProcedure, router } from "../index";
 import { noteSchema, requestIdSchema } from "./shared";
+
+/** Deletes the previous avatar, only if it is one this same account sent. */
+async function dropOldAvatar(
+  files: FileAccess,
+  previous: string | null | undefined,
+  userId: string
+) {
+  if (!(previous && isOwnAvatarKey(previous, userId))) {
+    return;
+  }
+  await files.remove(previous).catch(() => {
+    // A file left on disk never blocks the change of photo.
+  });
+}
 
 export const meRouter = router({
   /** The role comes from here, so a screen never trusts a stored copy. */
@@ -21,13 +36,52 @@ export const meRouter = router({
         phone: user.phone,
         locale: user.locale,
         role: user.role,
+        image: user.image,
       })
       .from(user)
       .where(eq(user.id, ctx.session.user.id));
     if (!row) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
-    return row;
+    const { image, ...profile } = row;
+    return {
+      ...profile,
+      imageUrl: image ? ((await ctx.files.getUrl(image))?.url ?? null) : null,
+    };
+  }),
+
+  /** The only way to write `user.image`: Better Auth refuses it on its own routes. */
+  setImage: protectedProcedure
+    .input(z.object({ storageKey: z.string().max(200) }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const isOwnFile =
+        isOwnAvatarKey(input.storageKey, userId) &&
+        (await ctx.files.getUrl(input.storageKey)) !== null;
+      if (!isOwnFile) {
+        throw new TRPCError({ code: "BAD_REQUEST" });
+      }
+      const [previous] = await ctx.db
+        .select({ image: user.image })
+        .from(user)
+        .where(eq(user.id, userId));
+      await ctx.db
+        .update(user)
+        .set({ image: input.storageKey })
+        .where(eq(user.id, userId));
+      if (previous?.image !== input.storageKey) {
+        await dropOldAvatar(ctx.files, previous?.image, userId);
+      }
+    }),
+
+  removeImage: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    const [previous] = await ctx.db
+      .select({ image: user.image })
+      .from(user)
+      .where(eq(user.id, userId));
+    await ctx.db.update(user).set({ image: null }).where(eq(user.id, userId));
+    await dropOldAvatar(ctx.files, previous?.image, userId);
   }),
 
   setLocale: protectedProcedure
