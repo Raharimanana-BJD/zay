@@ -21,12 +21,10 @@ import {
   Stepper,
   Title,
 } from "@/components/ui";
-import { authClient } from "@/lib/auth-client";
 import { type TKey, useI18n } from "@/lib/i18n";
+import { uploadFile } from "@/lib/upload";
 import { useErrorToast } from "@/lib/use-action";
 import { trpc, trpcClient } from "@/utils/trpc";
-
-import { ENV } from "../../../src/env";
 
 const IMAGE_QUALITY = 0.6;
 
@@ -65,25 +63,7 @@ async function pickAndUpload(kind: "doc" | "photo"): Promise<string | null> {
   if (picked.canceled || !asset) {
     return null;
   }
-  const file = await fetch(asset.uri);
-  const cookie = await authClient.getCookie();
-  const response = await fetch(`${ENV.EXPO_PUBLIC_SERVER_URL}/files/${kind}`, {
-    method: "POST",
-    credentials: "omit",
-    headers: {
-      "Content-Type": "application/octet-stream",
-      ...(cookie ? { Cookie: cookie } : {}),
-    },
-    body: await file.blob(),
-  });
-  const body = (await response.json().catch(() => ({}))) as {
-    code?: string;
-    key?: string;
-  };
-  if (!(response.ok && body.key)) {
-    throw new Error(body.code ?? "UPLOAD_FAILED");
-  }
-  return body.key;
+  return await uploadFile(asset.uri, kind);
 }
 
 type Verification =

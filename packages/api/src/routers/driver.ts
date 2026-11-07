@@ -36,6 +36,11 @@ import {
   PRICE_ADJUSTMENT_REASONS,
 } from "../domain/codes";
 import { ACTIVE_RIDE, OPEN_OFFERS } from "../domain/dispatch";
+import {
+  type FileAccess,
+  UPLOAD_DOC_KEY,
+  UPLOAD_PHOTO_KEY,
+} from "../domain/files";
 import { conflict, driverAnswer } from "../domain/offers";
 import {
   advanceRide,
@@ -62,8 +67,6 @@ import {
 
 const MS_PER_S = 1000;
 const SHORT_TEXT = 80;
-const UPLOAD_DOC_KEY = /^up-doc-[a-z0-9-]+\.(jpg|png)$/;
-const UPLOAD_PHOTO_KEY = /^up-photo-[a-z0-9-]+\.(jpg|png)$/;
 
 const relationSchema = z.enum(["owner", "renter", "employee"]);
 const zone = sql.raw(`'${TIME_ZONE}'`);
@@ -214,7 +217,12 @@ async function readOpenOffer(db: Database, driverId: string, now: Date) {
   };
 }
 
-async function readRide(db: Database, driverId: string, where: SQL) {
+async function readRide(
+  db: Database,
+  files: FileAccess,
+  driverId: string,
+  where: SQL
+) {
   const labels = placeLabels();
   const [row] = await labels
     .joins(
@@ -232,6 +240,7 @@ async function readRide(db: Database, driverId: string, where: SQL) {
           destination: labels.destination,
           clientName: user.name,
           clientPhone: user.phone,
+          clientImage: user.image,
           paymentStatus: payment.status,
           declaredAmountAr: payment.declaredAmountAr,
         })
@@ -263,9 +272,12 @@ async function readRide(db: Database, driverId: string, where: SQL) {
         eq(destinationChange.status, "pending")
       )
     );
-  const { pickupPoint, destinationPoint, ...rest } = row;
+  const { pickupPoint, destinationPoint, clientImage, ...rest } = row;
   return {
     ...rest,
+    clientImageUrl: clientImage
+      ? ((await files.getUrl(clientImage))?.url ?? null)
+      : null,
     pickupLat: pickupPoint.y,
     pickupLng: pickupPoint.x,
     destinationLat: destinationPoint.y,
@@ -337,6 +349,7 @@ export const driverRouter = router({
       .where(eq(driverPosition.driverId, driverId));
     const ride = await readRide(
       db,
+      ctx.files,
       driverId,
       inArray(booking.status, [...ACTIVE_RIDE])
     );
@@ -463,6 +476,7 @@ export const driverRouter = router({
     .query(async ({ ctx, input }) => {
       const ride = await readRide(
         ctx.db,
+        ctx.files,
         ctx.session.user.id,
         eq(booking.id, input.id)
       );

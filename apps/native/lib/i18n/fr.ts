@@ -399,4 +399,11 @@ export const fr = {
   "auth.passwordMismatch": "Les deux mots de passe ne sont pas identiques",
   "auth.driverHint":
     "Vous indiquerez votre véhicule et vos documents dans votre dossier.",
+  "photo.title": "Photo de profil",
+  "photo.edit": "Changer la photo de profil",
+  "photo.take": "Prendre une photo",
+  "photo.pick": "Choisir dans la galerie",
+  "photo.remove": "Retirer la photo",
+  "errors.CAMERA_DENIED":
+    "Autorisez l'appareil photo dans les réglages, ou choisissez une photo dans la galerie.",
 } as const;
