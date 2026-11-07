@@ -12,7 +12,7 @@ Les fonctions 3, 4, 5, 6, 7, 9, 11, 13, 17, 19 et 22 du scope attendaient chacun
 
 | Sujet | Choix retenu pour la démo |
 |---|---|
-| Rôles (3) | Inscription toujours en `client`. Le choix chauffeur appelle ensuite `driver.register`, qui crée `driver_profile` et passe le rôle à `driver`, seulement si le compte n'a aucune réservation. Le rôle reste jamais une entrée de l'inscription. `clientProcedure` et `driverProcedure` ferment les actions de l'autre rôle |
+| Rôles (3) | **Remplacé par [0006](../0006-inscription-unique-mode-chauffeur/index.md).** Ancienne hypothèse : inscription toujours en `client`. Le choix chauffeur appelle ensuite `driver.register`, qui crée `driver_profile` et passe le rôle à `driver`, seulement si le compte n'a aucune réservation. Le rôle reste jamais une entrée de l'inscription. `clientProcedure` et `driverProcedure` ferment les actions de l'autre rôle |
 | Navigation (3) | Expo Router, un groupe par espace : `(auth)`, `(client)`, `(driver)`, avec `Stack.Protected` |
 | Temps réel (4) | Lecture répétée par tRPC toutes les 3 s tant que l'écran est ouvert. Reprise après coupure : le téléphone relit l'état, sans file d'actions hors ligne. Les délais et les expirations restent contrôlés par l'heure du serveur |
 | Notifications (4) | Pas de push : il exige un projet Firebase et une clé. À la place, vibration et bandeau dans l'application, et l'écran chauffeur reste allumé en ligne. Application en arrière plan : pas d'alerte, à reprendre plus tard |
