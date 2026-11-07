@@ -31,6 +31,8 @@ _Ce sont des recommandations pour garder une construction ordonnée, pas des obl
 | 6 | Design system | Foundation | in-progress |
 | 7 | Français et malagasy | Foundation | in-progress |
 | 8 | Mise en ligne de la démo | Foundation | planned |
+| 31 | Authentification complète | Foundation | in-progress |
+| 32 | Retouches de l'interface mobile | Foundation | in-progress |
 | 9 | Première course complète | Slice 1 | in-progress |
 | 10 | Simulateur de chauffeurs | Slice 2 | planned |
 | 11 | Distribution par groupes | Slice 3 | in-progress |
@@ -114,6 +116,7 @@ spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decis
 - [ ] Design it (spec): `/architect design system`
 - [x] Build it: `/develop application mobile`
   - [x] Jetons noir et blanc et composants de base du mobile, montants en ariary
+  - [x] Nouveau design mobile d'après `Resource-zayapp/Zay App Redesign.pdf` : fond crème, jaune Zay, barre d'onglets flottante, accueil en 3 écrans, connexion et inscription séparées
 - [ ] Verify it: `/check verify application mobile`
 
 ### 7. Français et malagasy · in-progress
@@ -130,6 +133,30 @@ spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decis
 Un serveur, une base et un back office accessibles en ligne, plus une application Android installable. Faite tôt pour découvrir les problèmes de déploiement avant le dernier jour.
 **Done when:** l'application Android installée sur un vrai téléphone parle au serveur en ligne, et le back office s'ouvre dans un navigateur.
 - [ ] Design it (spec): `/architect mise en ligne de la démo`
+
+### 31. Authentification complète · in-progress
+Vérifier l'email par un code avant d'ouvrir un compte, retrouver un mot de passe oublié, changer son mot de passe, recevoir un email de bienvenue, et se connecter avec Google sur un compte existant. Puis, après la démo, changer d'email et supprimer son compte.
+spec [0004](../../specs/_root/0004-auth-complete/index.md) · code in `packages/auth/`, `packages/email/`, `apps/native/app/(auth)/`, `apps/web/src/routes/mot-de-passe-oublie.tsx`
+**Done when:** un nouveau compte ne s'ouvre qu'avec le code reçu par email, un mot de passe oublié se remplace par code sur le mobile et le web, et les comptes de l'équipe se connectent sans code.
+- [x] Design it (spec): `/architect authentification`
+- [ ] Build it: `/develop authentification`
+  - [x] Codes, vérification obligatoire, bienvenue et Google, côté serveur et email (AC-1 à AC-4, AC-6 à AC-9)
+  - [x] Écrans mobiles et page web du mot de passe oublié, changement de mot de passe (AC-1, AC-2, AC-4, AC-5)
+  - [ ] Changement d'email par code (AC-10)
+  - [ ] Suppression du compte par anonymisation (AC-11 à AC-13)
+- [ ] Verify it: `/check verify authentification`
+
+### 32. Retouches de l'interface mobile · in-progress
+Sept retouches après le nouveau design : splash animé, carte en plein écran, onglets en icônes seules, photo de profil, inscription par Google, PDF pour les documents chauffeur et bloc Documents refait.
+spec [0005](../../specs/_root/0005-retouches-interface-mobile/index.md) · code in `apps/native/`, `apps/server/src/`, `packages/auth/`, `packages/api/src/routers/`, `apps/web/src/routes/admin/chauffeurs/`
+**Done when:** l'app s'ouvre sur le splash jaune animé, chaque carte s'agrandit, un nouvel utilisateur s'inscrit par Google puis complète son téléphone, chacun a sa photo, et un chauffeur envoie ses papiers en PDF d'un seul bouton pendant que l'équipe les lit et date leur expiration.
+- [x] Design it (spec): `/architect retouches de l'interface mobile`
+- [ ] Build it: `/develop retouches de l'interface mobile`
+  - [ ] Onglets en icônes, splash animé, carte plein écran (AC-1 à AC-4)
+  - [ ] Serveur de fichiers et photo de profil (AC-5 à AC-7, AC-14)
+  - [ ] Téléphone facultatif, inscription Google et écran de complétion (AC-8 à AC-11)
+  - [ ] Documents chauffeur : PDF, envoi groupé, bloc refait, back office et expiration (AC-12 à AC-17)
+- [ ] Verify it: `/check verify retouches de l'interface mobile`
 
 ## Slice 1: La course de bout en bout
 
