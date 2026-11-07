@@ -9,19 +9,24 @@ const isNetworkFailure = (error: unknown) =>
   error instanceof TypeError ||
   (error instanceof Error && error.message === "Network request failed");
 
-export function useErrorToast() {
+/** The words for a server code, a network failure, or anything else. */
+export function useErrorLabel() {
   const { t, has } = useI18n();
-  const { toast } = useToast();
   return (error: unknown) => {
     const message = error instanceof Error ? error.message : "";
     const key = `errors.${message}`;
-    let label = t("errors.generic");
     if (isNetworkFailure(error)) {
-      label = t("errors.network");
-    } else if (has(key)) {
-      label = t(key);
+      return t("errors.network");
     }
-    toast.show({ variant: "danger", label });
+    return has(key) ? t(key) : t("errors.generic");
+  };
+}
+
+export function useErrorToast() {
+  const { toast } = useToast();
+  const errorLabel = useErrorLabel();
+  return (error: unknown) => {
+    toast.show({ variant: "danger", label: errorLabel(error) });
   };
 }
 

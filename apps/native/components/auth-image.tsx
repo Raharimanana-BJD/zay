@@ -16,15 +16,26 @@ function useSessionCookie() {
   return cookie;
 }
 
-export function AuthImage({ uri, label }: { uri: string; label: string }) {
+export function AuthImage({
+  uri,
+  label,
+  className = IMAGE_CLASS,
+  fit = "cover",
+}: {
+  uri: string;
+  label: string;
+  className?: string;
+  fit?: "contain" | "cover";
+}) {
   const cookie = useSessionCookie();
   if (!cookie) {
-    return <View className={IMAGE_CLASS} />;
+    return <View className={className} />;
   }
   return (
     <Image
       accessibilityLabel={label}
-      className={IMAGE_CLASS}
+      className={className}
+      resizeMode={fit}
       source={{ uri, headers: { Cookie: cookie } }}
     />
   );

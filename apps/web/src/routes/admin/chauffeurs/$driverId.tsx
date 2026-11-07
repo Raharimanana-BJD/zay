@@ -31,7 +31,7 @@ import { EmptyState, QueryState } from "@/components/admin/query-state";
 import RecentBookings from "@/components/admin/recent-bookings";
 import StatusBadge from "@/components/admin/status-badge";
 import { banReasonText } from "@/lib/ban-reason";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatDay, todayIsoDay } from "@/lib/format";
 import {
   activityLabel,
   CATEGORY_LABELS,
@@ -87,12 +87,15 @@ function Decisions({
 }) {
   const trpc = useTRPC();
   const decide = useMutation(trpc.admin.drivers.decide.mutationOptions());
+  const isDocument = subject === "document";
   const send =
     (next: "approved" | "rejected" | "changes_requested" | "suspended") =>
     async ({
+      date,
       reasonCode,
       reasonNote,
     }: {
+      date?: string;
       reasonCode?: string;
       reasonNote?: string;
     }) => {
@@ -102,6 +105,8 @@ function Decisions({
         status: next,
         reasonCode,
         reasonNote,
+        // Only a document approval carries an expiry date (spec 0005, AC-17).
+        expiresAt: isDocument && next === "approved" ? date : undefined,
       });
     };
   const name = labelOf(SUBJECT_LABELS, subject).toLowerCase();
@@ -145,6 +150,13 @@ function Decisions({
       <div className="flex flex-wrap gap-2">
         <ActionDialog
           confirmLabel="Approuver"
+          dateHint={
+            isDocument
+              ? "Laissez vide si la pièce n'expire pas. Elle reste valable jusqu'à la fin de ce jour."
+              : undefined
+          }
+          dateLabel={isDocument ? "Date d'expiration" : undefined}
+          dateMin={isDocument ? todayIsoDay() : undefined}
           disabled={!canApprove}
           label="Approuver"
           onConfirm={send("approved")}
@@ -210,7 +222,28 @@ function DocumentViewer({
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
-          {file.data && !failed ? (
+          {file.data?.fileKind === "pdf" ? (
+            <div className="grid gap-2">
+              {/* The browser PDF viewer shows the file; it runs no script from this page. */}
+              <object
+                aria-label={title}
+                className="h-[480px] w-full rounded-lg border"
+                data={file.data.url}
+                type="application/pdf"
+              >
+                <p>Ce navigateur n'affiche pas les PDF ici.</p>
+              </object>
+              <a
+                className="font-medium text-sm underline underline-offset-4"
+                href={file.data.url}
+                rel="noopener"
+                target="_blank"
+              >
+                Ouvrir
+              </a>
+            </div>
+          ) : null}
+          {file.data && file.data.fileKind === "image" && !failed ? (
             <img
               alt={title}
               className="w-full rounded-lg"
@@ -265,7 +298,7 @@ function DocumentsTable({
                       doc.isExpired ? "font-medium text-destructive" : undefined
                     }
                   >
-                    {formatDateTime(doc.expiresAt)}
+                    {formatDay(doc.expiresAt)}
                     {doc.isExpired ? " (expirée)" : ""}
                   </span>
                 ) : (
@@ -315,7 +348,7 @@ function DriverContent({
             />
           ) : null
         }
-        description={detail.phone}
+        description={detail.phone ?? "Téléphone non renseigné"}
         title={detail.name}
       />
       <div className="flex flex-wrap gap-2">

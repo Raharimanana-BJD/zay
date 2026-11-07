@@ -1,6 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 
 import type { Context } from "./context";
+import { assertProfileComplete, isProfileComplete } from "./domain/profile";
 import { isStaffRole } from "./domain/staff";
 
 export const t = initTRPC.context<Context>().create();
@@ -40,15 +41,27 @@ export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   return next();
 });
 
+/** A signed in account with a phone: the gate on every client and driver action. */
+export const completeProcedure = protectedProcedure.use(
+  async ({ ctx, next }) => {
+    // A phone is never removed from a live session, so a session that has one
+    // is complete. Only a session without one is checked again in the database.
+    if (!isProfileComplete(ctx.session.user)) {
+      await assertProfileComplete(ctx.db, ctx.session.user.id);
+    }
+    return next();
+  }
+);
+
 /** The role is read from the database on every request, never from the client. */
-export const clientProcedure = protectedProcedure.use(({ ctx, next }) => {
+export const clientProcedure = completeProcedure.use(({ ctx, next }) => {
   if (ctx.session.user.role !== "client") {
     throw new TRPCError({ code: "FORBIDDEN", message: "ROLE_NOT_ALLOWED" });
   }
   return next();
 });
 
-export const driverProcedure = protectedProcedure.use(({ ctx, next }) => {
+export const driverProcedure = completeProcedure.use(({ ctx, next }) => {
   if (ctx.session.user.role !== "driver") {
     throw new TRPCError({ code: "FORBIDDEN", message: "ROLE_NOT_ALLOWED" });
   }

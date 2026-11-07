@@ -7,6 +7,7 @@ import z from "zod";
 
 import { Field } from "@/components/auth-fields";
 import { AuthShell, openVerification } from "@/components/auth-shell";
+import { GoogleButton } from "@/components/google-button";
 import { Action, Muted, Segment, TextLink } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/lib/i18n";
@@ -72,6 +73,7 @@ export default function SignUpScreen() {
               />
             )}
           </form.Subscribe>
+          <GoogleButton />
           <TextLink
             label={t("auth.signInAction")}
             onPress={() => router.back()}

@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { Uniwind } from "uniwind";
 
+import { CompleteProfile } from "@/components/complete-profile";
 import { BootSplash } from "@/components/splash";
 import { Action, Loading, Screen, Title } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
@@ -60,6 +61,8 @@ function Routes() {
   return (
     <>
       <RouteContent
+        // Offline, me.get is missing: the server still guards every action.
+        isIncomplete={isSignedIn && me.data?.isComplete === false}
         isSignedIn={isSignedIn}
         isWaiting={splashGone ? isPending : booting}
         registering={registering}
@@ -75,12 +78,14 @@ function Routes() {
 }
 
 function RouteContent({
+  isIncomplete,
   isWaiting,
   isSignedIn,
   registering,
   role,
   setRegistering,
 }: {
+  isIncomplete: boolean;
   isWaiting: boolean;
   isSignedIn: boolean;
   registering: boolean;
@@ -89,6 +94,10 @@ function RouteContent({
 }) {
   if (isWaiting) {
     return <Loading />;
+  }
+  // A Google account without a phone sees only this screen (spec 0005).
+  if (isIncomplete && !registering) {
+    return <CompleteProfile />;
   }
   if (isSignedIn && !registering && role !== "client" && role !== "driver") {
     return role ? <StaffNotice /> : <Loading />;

@@ -43,3 +43,28 @@ export const newRequestId = () =>
     const value = char === "x" ? random : (random % 4) + 8;
     return value.toString(16);
   });
+
+const TIME_ZONE = "Indian/Antananarivo";
+const MS_PER_DAY = 86_400_000;
+const dayKey = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** A day only, like `07/11/2026`, in Antananarivo time. */
+export const formatDay = (value: Date | string, locale: string) =>
+  new Date(value).toLocaleDateString(locale === "mg" ? "fr-MG" : "fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: TIME_ZONE,
+  });
+
+/** Whole days from today to that date, both read in Antananarivo time. Negative once past. */
+export function daysUntil(value: Date | string, now = new Date()) {
+  const toUtcDay = (date: Date) =>
+    Date.parse(`${dayKey.format(date)}T00:00:00Z`);
+  return Math.round((toUtcDay(new Date(value)) - toUtcDay(now)) / MS_PER_DAY);
+}

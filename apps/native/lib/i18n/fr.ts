@@ -235,7 +235,8 @@ export const fr = {
   "dossier.changesRequested":
     "L'équipe demande un complément. Renvoyez les documents concernés.",
   "dossier.documents": "Documents",
-  "dossier.documentsHint": "Prenez une photo nette de chaque document.",
+  "dossier.documentsHint":
+    "Envoyez une photo nette ou un PDF de chaque document.",
   "dossier.inUse": "Véhicule utilisé",
   "dossier.make": "Marque",
   "dossier.missing": "À envoyer",
@@ -250,6 +251,29 @@ export const fr = {
   "dossier.saved": "Véhicule enregistré",
   "dossier.send": "Envoyer",
   "dossier.sent": "Document envoyé",
+  "dossier.progress": "{n} sur {total} envoyés",
+  "dossier.progressLabel": "Documents envoyés",
+  "dossier.takePhoto": "Prendre une photo",
+  "dossier.pickImage": "Choisir une image",
+  "dossier.pickPdf": "Choisir un PDF",
+  "dossier.ready": "Prêt",
+  "dossier.sending": "Envoi en cours",
+  "dossier.sendAll": "Envoyer mes documents ({n})",
+  "dossier.sentCount": "Documents envoyés : {n}",
+  "dossier.sentFailed": "Certains documents n'ont pas pu partir. Réessayez.",
+  "dossier.expiresOn": "Expire le {date}",
+  "dossier.expiresSoon": "Expire bientôt",
+  "dossier.expired": "Expiré",
+  "dossier.pdfSentOn": "PDF envoyé le {date}",
+  "dossier.pdfTooLarge":
+    "Ce PDF dépasse 10 Mo. Choisissez un fichier plus léger.",
+  "dossier.openDocument": "Voir le document {name}",
+  "dossier.change": "Ajouter ou remplacer, {name}",
+  "docReason.document_unreadable": "Document illisible",
+  "docReason.document_expired": "Document expiré",
+  "docReason.information_mismatch": "Informations différentes",
+  "docReason.other": "Autre motif",
+
   "dossier.status": "État",
   "dossier.useVehicle": "Utiliser ce véhicule",
   "dossier.vehicles": "Véhicules",
@@ -282,8 +306,9 @@ export const fr = {
   "errors.DOCUMENT_EXPIRED": "Un de vos documents a expiré. Remplacez-le.",
   "errors.DRIVER_NOT_REGISTERED": "Dossier chauffeur introuvable.",
   "errors.DRIVER_UNAVAILABLE": "Ce chauffeur n'est plus disponible.",
-  "errors.FILE_TOO_LARGE": "Cette image est trop lourde.",
-  "errors.FILE_TYPE_NOT_ALLOWED": "Envoyez une image JPEG ou PNG.",
+  "errors.FILE_TOO_LARGE": "Ce fichier est trop lourd.",
+  "errors.FILE_TYPE_NOT_ALLOWED":
+    "Format non accepté. Envoyez une image JPEG ou PNG, ou un PDF pour un document.",
   "errors.generic": "Une erreur est survenue. Réessayez.",
   "errors.NEGOTIATION_ALREADY_OPEN":
     "Terminez d'abord la négociation en cours.",
@@ -319,7 +344,7 @@ export const fr = {
   "auth.forgot": "Mot de passe oublié ?",
   "auth.google": "Continuer avec Google",
   "auth.googleFailed":
-    "Aucun compte Zay avec cet email Google. Créez d'abord votre compte.",
+    "La connexion avec Google n'a pas abouti. Réessayez ou utilisez votre email.",
   "auth.newPassword": "Nouveau mot de passe",
   "auth.or": "ou",
   "auth.resend": "Renvoyer le code",
@@ -406,4 +431,11 @@ export const fr = {
   "photo.remove": "Retirer la photo",
   "errors.CAMERA_DENIED":
     "Autorisez l'appareil photo dans les réglages, ou choisissez une photo dans la galerie.",
+  "complete.title": "Compléter mon profil",
+  "complete.body":
+    "Encore une étape : votre numéro, pour que votre chauffeur ou votre client puisse vous joindre.",
+  "complete.role": "Vous êtes",
+  "complete.action": "Continuer",
+  "errors.PROFILE_INCOMPLETE": "Complétez d'abord votre profil.",
+  "errors.PROFILE_ALREADY_COMPLETE": "Votre profil est déjà complet.",
 } as const;

@@ -24,12 +24,14 @@ import {
   SUSPENSION_REASONS,
   VERIFICATION_REJECTION_REASONS,
 } from "../../domain/codes";
+import { fileKindOf } from "../../domain/files";
 import { adminProcedure, router, staffProcedure } from "../../index";
 import { suspensionIncomplete } from "./accounts";
 import {
   assertReason,
   badRequest,
   conflict,
+  daySchema,
   isBanned,
   likePattern,
   notFound,
@@ -71,8 +73,37 @@ function assertTransition(subject: Subject, from: Status, to: Status) {
   }
 }
 
+// Madagascar keeps UTC+3 all year (no summer time), the offset of TIME_ZONE.
+const ANTANANARIVO_OFFSET = "+03:00";
+
+/** The last moment of this day (AAAA-MM-JJ) in Antananarivo. */
+const endOfDay = (day: string) =>
+  new Date(`${day}T23:59:59.999${ANTANANARIVO_OFFSET}`);
+
 const isExpired = (piece: { expiresAt: Date | null }, now: Date) =>
   piece.expiresAt !== null && piece.expiresAt < now;
+
+/** An expiry date only goes with the approval of a document. */
+function assertExpiryAllowed(input: {
+  expiresAt?: string;
+  status: Status;
+  subject: Subject;
+}) {
+  const isDocumentApproval =
+    input.subject === "document" && input.status === "approved";
+  if (input.expiresAt !== undefined && !isDocumentApproval) {
+    throw badRequest("EXPIRY_NOT_ALLOWED");
+  }
+}
+
+/** The date written on approval. Empty means it never expires; a past day is refused. */
+function approvedExpiry(day: string | undefined, now: Date) {
+  const expiresAt = day ? endOfDay(day) : null;
+  if (isExpired({ expiresAt }, now)) {
+    throw conflict(DOCUMENTS_NOT_APPROVED);
+  }
+  return { expiresAt };
+}
 
 /** What stops an approval. A driver or vehicle needs at least one current piece. */
 function blockersFor(pieces: Piece[], now: Date) {
@@ -293,10 +324,10 @@ export const driversRouter = router({
       const file = document
         ? await ctx.files.getUrl(document.storageKey)
         : null;
-      if (!file) {
+      if (!(document && file)) {
         throw notFound();
       }
-      return file;
+      return { ...file, fileKind: fileKindOf(document.storageKey) };
     }),
 
   decide: adminProcedure
@@ -312,10 +343,13 @@ export const driversRouter = router({
         ]),
         reasonCode: z.string().optional(),
         reasonNote: optionalNoteSchema,
+        /** Only when approving a document. Empty means it never expires. */
+        expiresAt: daySchema.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const { subject, subjectId, status, reasonCode, reasonNote } = input;
+      assertExpiryAllowed(input);
       if (
         status === "suspended" ||
         status === "rejected" ||
@@ -398,12 +432,12 @@ export const driversRouter = router({
             }
           }
           assertTransition(subject, document.verificationStatus, status);
-          if (status === "approved" && isExpired(document, now)) {
-            throw conflict(DOCUMENTS_NOT_APPROVED);
-          }
+          // The team sets the date while approving; the check reads that new value.
+          const approval =
+            status === "approved" ? approvedExpiry(input.expiresAt, now) : {};
           await tx
             .update(driverDocument)
-            .set({ verificationStatus: status })
+            .set({ verificationStatus: status, ...approval })
             .where(eq(driverDocument.id, subjectId));
         } else if (subject === "vehicle") {
           const [current] = await tx

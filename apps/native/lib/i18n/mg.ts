@@ -233,7 +233,8 @@ export const mg: Record<keyof typeof fr, string> = {
   "dossier.changesRequested":
     "Mangataka fanampiny ny ekipa. Alefaso indray ny antontan-taratasy.",
   "dossier.documents": "Antontan-taratasy",
-  "dossier.documentsHint": "Makà sary mazava isaky ny antontan-taratasy.",
+  "dossier.documentsHint":
+    "Alefaso sary mazava na PDF isaky ny antontan-taratasy.",
   "dossier.inUse": "Fiara ampiasaina",
   "dossier.make": "Marika",
   "dossier.missing": "Halefa",
@@ -248,6 +249,29 @@ export const mg: Record<keyof typeof fr, string> = {
   "dossier.saved": "Voatahiry ny fiara",
   "dossier.send": "Alefaso",
   "dossier.sent": "Voalefa ny antontan-taratasy",
+  "dossier.progress": "{n} amin'ny {total} voalefa",
+  "dossier.progressLabel": "Antontan-taratasy voalefa",
+  "dossier.takePhoto": "Haka sary",
+  "dossier.pickImage": "Hisafidy sary",
+  "dossier.pickPdf": "Hisafidy PDF",
+  "dossier.ready": "Vonona",
+  "dossier.sending": "Alefa izao",
+  "dossier.sendAll": "Alefaso ny antontan-taratasiko ({n})",
+  "dossier.sentCount": "Antontan-taratasy voalefa : {n}",
+  "dossier.sentFailed": "Misy antontan-taratasy tsy lasa. Andramo indray.",
+  "dossier.expiresOn": "Lany daty ny {date}",
+  "dossier.expiresSoon": "Ho lany daty tsy ho ela",
+  "dossier.expired": "Lany daty",
+  "dossier.pdfSentOn": "PDF nalefa ny {date}",
+  "dossier.pdfTooLarge":
+    "Mihoatra ny 10 Mo ity PDF ity. Misafidiana rakitra maivana kokoa.",
+  "dossier.openDocument": "Hijery ny antontan-taratasy {name}",
+  "dossier.change": "Hanampy na hanova, {name}",
+  "docReason.document_unreadable": "Tsy voavaky ny antontan-taratasy",
+  "docReason.document_expired": "Lany daty ny antontan-taratasy",
+  "docReason.information_mismatch": "Tsy mitovy ny fampahalalana",
+  "docReason.other": "Antony hafa",
+
   "dossier.status": "Toe-javatra",
   "dossier.useVehicle": "Ampiasao ity fiara ity",
   "dossier.vehicles": "Fiara",
@@ -276,8 +300,9 @@ export const mg: Record<keyof typeof fr, string> = {
   "errors.DOCUMENT_EXPIRED": "Lany daty ny antontan-taratasy iray. Soloy.",
   "errors.DRIVER_NOT_REGISTERED": "Tsy hita ny antontan-taratasin'ny mpamily.",
   "errors.DRIVER_UNAVAILABLE": "Tsy afaka intsony ity mpamily ity.",
-  "errors.FILE_TOO_LARGE": "Mavesatra loatra ity sary ity.",
-  "errors.FILE_TYPE_NOT_ALLOWED": "Mandefasa sary JPEG na PNG.",
+  "errors.FILE_TOO_LARGE": "Mavesatra loatra ity rakitra ity.",
+  "errors.FILE_TYPE_NOT_ALLOWED":
+    "Tsy ekena ity endrika ity. Mandefasa sary JPEG na PNG, na PDF ho an'ny antontan-taratasy.",
   "errors.generic": "Nisy olana. Andramo indray.",
   "errors.NEGOTIATION_ALREADY_OPEN":
     "Vitao aloha ny fifampiraharahana mandeha.",
@@ -314,7 +339,7 @@ export const mg: Record<keyof typeof fr, string> = {
   "auth.forgot": "Adino ny tenimiafina?",
   "auth.google": "Hiditra amin'ny Google",
   "auth.googleFailed":
-    "Tsy misy kaonty Zay amin'io mailaka Google io. Manokafa kaonty aloha.",
+    "Tsy nahomby ny fidirana amin'ny Google. Andramo indray na ampiasao ny mailakao.",
   "auth.newPassword": "Tenimiafina vaovao",
   "auth.or": "na",
   "auth.resend": "Alefaso indray ny kaody",
@@ -399,4 +424,11 @@ export const mg: Record<keyof typeof fr, string> = {
   "photo.remove": "Hanala ny sary",
   "errors.CAMERA_DENIED":
     "Avelao hampiasaina ny fakan-tsary ao amin'ny paramètres, na misafidiana sary ao amin'ny galerie.",
+  "complete.title": "Fenoy ny mombamomba anao",
+  "complete.body":
+    "Dingana iray sisa : ny laharan'ny findainao, mba hahafahan'ny mpamily na ny mpanjifa miantso anao.",
+  "complete.role": "Ianao dia",
+  "complete.action": "Hanohy",
+  "errors.PROFILE_INCOMPLETE": "Fenoy aloha ny mombamomba anao.",
+  "errors.PROFILE_ALREADY_COMPLETE": "Efa feno ny mombamomba anao.",
 };

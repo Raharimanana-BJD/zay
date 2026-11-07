@@ -22,3 +22,9 @@ export const avatarOwnerOf = (key: string): string | null =>
 
 export const isOwnAvatarKey = (key: string, userId: string) =>
   avatarOwnerOf(key) === userId;
+
+export type FileKind = "image" | "pdf";
+
+/** The format sits in the key's extension, decided by the server from the content. */
+export const fileKindOf = (storageKey: string): FileKind =>
+  storageKey.endsWith(".pdf") ? "pdf" : "image";
