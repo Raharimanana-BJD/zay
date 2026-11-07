@@ -55,6 +55,20 @@ export function ProfileScreen() {
   const { toast } = useToast();
   const me = useQuery(trpc.me.get.queryOptions());
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  // A Google account has no password to change (spec 0005).
+  const accounts = useQuery({
+    queryKey: ["auth", "accounts"],
+    queryFn: async () => {
+      const result = await authClient.listAccounts();
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+  });
+  const hasPassword =
+    accounts.data?.some((account) => account.providerId === "credential") ??
+    true;
   const saveLocale = useMutation({
     mutationFn: (next: Locale) =>
       trpcClient.me.setLocale.mutate({ locale: next }),
@@ -143,14 +157,18 @@ export function ProfileScreen() {
         value={locale}
       />
 
-      <SectionLabel>{t("profile.security")}</SectionLabel>
-      <Group>
-        <GroupRow
-          isFirst
-          label={t("profile.changePassword")}
-          onPress={() => setIsChangingPassword(true)}
-        />
-      </Group>
+      {hasPassword ? (
+        <>
+          <SectionLabel>{t("profile.security")}</SectionLabel>
+          <Group>
+            <GroupRow
+              isFirst
+              label={t("profile.changePassword")}
+              onPress={() => setIsChangingPassword(true)}
+            />
+          </Group>
+        </>
+      ) : null}
 
       <SectionLabel>{t("profile.help")}</SectionLabel>
       <Group>

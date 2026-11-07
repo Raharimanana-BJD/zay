@@ -12,6 +12,23 @@ const NARROW_SPACES = /[  ]/g;
 export const formatAr = (amount: number) =>
   `${numberFormat.format(amount).replace(NARROW_SPACES, " ")} Ar`;
 
+const dayFormat = new Intl.DateTimeFormat("fr-FR", {
+  timeZone: TIME_ZONE,
+  dateStyle: "short",
+});
+const isoDayFormat = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+export const formatDay = (date: Date | string) =>
+  dayFormat.format(new Date(date));
+
+/** Today in Antananarivo, as AAAA-MM-JJ (the value of a date field). */
+export const todayIsoDay = () => isoDayFormat.format(new Date());
+
 export const formatDateTime = (date: Date | string) =>
   dateTimeFormat.format(new Date(date));
 

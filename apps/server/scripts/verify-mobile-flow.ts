@@ -12,7 +12,7 @@ import * as t from "@zay-app/db/schema/index";
 import { and, desc, eq, inArray } from "drizzle-orm";
 
 import { files } from "../src/files";
-import { auth, db } from "../src/services";
+import { auth, db, mailer } from "../src/services";
 
 const BAZAR_BE = { lat: -23.3528, lng: 43.6689, note: "Bazar Be" };
 const STADE = { lat: -23.3691, lng: 43.6683, note: "Stade" };
@@ -61,6 +61,7 @@ async function caller(email: string) {
       auth,
       files,
       headers: new Headers(),
+      mailer,
     }),
   };
 }

@@ -57,13 +57,18 @@ app.get("/files/:key", async (c) => {
   if (!file) {
     return c.body(null, 404);
   }
-  return c.body(file, 200, {
+  const contentType = contentTypeOf(key);
+  const headers: Record<string, string> = {
     "Cache-Control": "private, no-store",
-    "Content-Type": contentTypeOf(key),
+    "Content-Type": contentType,
     "X-Content-Type-Options": "nosniff",
-    // A crafted PDF opened in the team's browser can run nothing.
-    "Content-Security-Policy": "sandbox",
-  });
+  };
+  // Chrome refuses to show its PDF viewer for a sandboxed response, so a PDF
+  // relies on the browser viewer, which runs no page script. Images stay sandboxed.
+  if (contentType !== "application/pdf") {
+    headers["Content-Security-Policy"] = "sandbox";
+  }
+  return c.body(file, 200, headers);
 });
 
 const tooLarge = (c: Context) => c.json({ code: "FILE_TOO_LARGE" }, 413);

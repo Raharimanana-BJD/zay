@@ -106,7 +106,7 @@ function DriversPage() {
                           {item.name}
                         </Link>
                       </TableCell>
-                      <TableCell>{item.phone}</TableCell>
+                      <TableCell>{item.phone ?? "Non renseigné"}</TableCell>
                       <TableCell>
                         <StatusBadge kind="verification" status={item.status} />
                       </TableCell>

@@ -16,7 +16,7 @@ export const user = pgTable("user", {
   banned: boolean("banned").default(false),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
-  phone: text("phone").notNull().unique(),
+  phone: text("phone").unique(),
   locale: text("locale").default("fr").notNull(),
 });
 
