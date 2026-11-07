@@ -6,8 +6,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Spinner, useToast } from "heroui-native";
 import { useEffect, useRef, useState } from "react";
 import { Linking, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
 import { AuthImage } from "@/components/auth-image";
 import { OfflineBanner } from "@/components/offline-banner";
 import {
@@ -18,6 +16,7 @@ import {
 import { ReasonSheet } from "@/components/reason-sheet";
 import { ReportButton } from "@/components/report-button";
 import { Sheet } from "@/components/sheet";
+import { SafeAreaView } from "@/components/styled";
 import {
   Action,
   Body,

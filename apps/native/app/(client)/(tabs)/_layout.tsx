@@ -1,14 +1,13 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
-import type { ColorValue } from "react-native";
 
+import { ZayTabBar } from "@/components/tab-bar";
 import { useI18n } from "@/lib/i18n";
 
-const icon =
-  (name: keyof typeof Ionicons.glyphMap) =>
-  ({ color, size }: { color: ColorValue; size: number }) => (
-    <Ionicons color={color} name={name} size={size} />
-  );
+const ICONS = {
+  reserver: "car-outline",
+  courses: "time-outline",
+  profil: "person-outline",
+} as const;
 
 export default function ClientTabs() {
   const { t } = useI18n();
@@ -16,22 +15,13 @@ export default function ClientTabs() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#000000",
-        tabBarInactiveTintColor: "#5e5e5e",
+        sceneStyle: { backgroundColor: "#f5f3ee" },
       }}
+      tabBar={(props) => <ZayTabBar {...props} icons={ICONS} />}
     >
-      <Tabs.Screen
-        name="reserver"
-        options={{ title: t("nav.book"), tabBarIcon: icon("car") }}
-      />
-      <Tabs.Screen
-        name="courses"
-        options={{ title: t("nav.rides"), tabBarIcon: icon("time") }}
-      />
-      <Tabs.Screen
-        name="profil"
-        options={{ title: t("nav.profile"), tabBarIcon: icon("person") }}
-      />
+      <Tabs.Screen name="reserver" options={{ title: t("nav.book") }} />
+      <Tabs.Screen name="courses" options={{ title: t("nav.rides") }} />
+      <Tabs.Screen name="profil" options={{ title: t("nav.profile") }} />
     </Tabs>
   );
 }

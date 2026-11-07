@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { KeyboardAvoidingView } from "@/components/styled";
 
 import { Heading } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
@@ -28,7 +28,7 @@ export function Sheet({
         behavior="padding"
         className="flex-1 justify-end bg-black/40"
       >
-        <View className="max-h-[85%] gap-3 rounded-t-3xl bg-background p-4 pb-8">
+        <View className="max-h-[85%] gap-3 rounded-t-3xl bg-background px-6 pt-6 pb-8">
           <View className="flex-row items-center justify-between gap-3">
             <View className="shrink">
               <Heading>{title}</Heading>

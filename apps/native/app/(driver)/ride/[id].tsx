@@ -3,11 +3,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useToast } from "heroui-native";
 import { useState } from "react";
 import { Linking, ScrollView, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
 import { OfflineBanner } from "@/components/offline-banner";
 import { ReasonSheet } from "@/components/reason-sheet";
 import { ReportButton } from "@/components/report-button";
+import { SafeAreaView } from "@/components/styled";
 import {
   Action,
   Card,
