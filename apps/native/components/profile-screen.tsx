@@ -1,14 +1,18 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useToast } from "heroui-native";
+import * as ImagePicker from "expo-image-picker";
+import { Spinner, useToast } from "heroui-native";
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
+import { Avatar } from "@/components/auth-image";
 import { ChangePassword } from "@/components/change-password";
 import { ReportButton } from "@/components/report-button";
 import { Sheet } from "@/components/sheet";
 import {
   Group,
   GroupRow,
+  INK,
   Screen,
   SectionLabel,
   Segment,
@@ -16,38 +20,109 @@ import {
 } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 import { type Locale, useI18n } from "@/lib/i18n";
+import { uploadFile } from "@/lib/upload";
+import { useErrorToast } from "@/lib/use-action";
 import { queryClient, trpc, trpcClient } from "@/utils/trpc";
 
-const initialOf = (name?: string) =>
-  name?.trim().charAt(0).toUpperCase() || "Z";
+const PHOTO_QUALITY = 0.6;
+
+type PhotoSource = "camera" | "library";
+
+/** Opens the camera or the gallery, cropped to a square. Null when cancelled. */
+async function pickSquarePhoto(source: PhotoSource) {
+  const options: ImagePicker.ImagePickerOptions = {
+    mediaTypes: ["images"],
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: PHOTO_QUALITY,
+  };
+  if (source === "camera") {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      throw new Error("CAMERA_DENIED");
+    }
+  }
+  const picked =
+    source === "camera"
+      ? await ImagePicker.launchCameraAsync(options)
+      : await ImagePicker.launchImageLibraryAsync(options);
+  const asset = picked.assets?.[0];
+  return picked.canceled || !asset ? null : asset.uri;
+}
 
 export function ProfileScreen() {
   const { t, locale, setLocale } = useI18n();
   const { toast } = useToast();
   const me = useQuery(trpc.me.get.queryOptions());
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  // A Google account has no password to change (spec 0005).
+  const accounts = useQuery({
+    queryKey: ["auth", "accounts"],
+    queryFn: async () => {
+      const result = await authClient.listAccounts();
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+  });
+  const hasPassword =
+    accounts.data?.some((account) => account.providerId === "credential") ??
+    true;
   const saveLocale = useMutation({
     mutationFn: (next: Locale) =>
       trpcClient.me.setLocale.mutate({ locale: next }),
     onError: () =>
       toast.show({ variant: "danger", label: t("errors.network") }),
   });
+  const showError = useErrorToast();
+  const [isPhotoMenuOpen, setIsPhotoMenuOpen] = useState(false);
+  const changePhoto = useMutation({
+    mutationFn: async (source: PhotoSource) => {
+      const uri = await pickSquarePhoto(source);
+      if (uri) {
+        const storageKey = await uploadFile(uri, "avatar");
+        await trpcClient.me.setImage.mutate({ storageKey });
+      }
+    },
+    onError: showError,
+    onSettled: () => me.refetch(),
+  });
+  const removePhoto = useMutation({
+    mutationFn: () => trpcClient.me.removeImage.mutate(),
+    onError: showError,
+    onSettled: () => me.refetch(),
+  });
+  const isSavingPhoto = changePhoto.isPending || removePhoto.isPending;
+  const choosePhoto = (source: PhotoSource) => {
+    setIsPhotoMenuOpen(false);
+    changePhoto.mutate(source);
+  };
   const name = me.data?.name;
   const phone = me.data?.phone ?? "—";
+  const imageUrl = me.data?.imageUrl ?? null;
 
   return (
     <Screen>
       <Title>{t("nav.profile")}</Title>
       <View className="flex-row items-center gap-4 rounded-3xl bg-surface p-5 shadow-black/5 shadow-sm">
-        <View
-          accessibilityElementsHidden
-          className="size-16 items-center justify-center rounded-full bg-foreground"
-          importantForAccessibility="no-hide-descendants"
+        <Pressable
+          accessibilityLabel={t("photo.edit")}
+          accessibilityRole="button"
+          accessibilityState={{ busy: isSavingPhoto }}
+          disabled={isSavingPhoto}
+          onPress={() => setIsPhotoMenuOpen(true)}
         >
-          <Text className="font-black text-2xl text-white">
-            {initialOf(name)}
-          </Text>
-        </View>
+          <Avatar name={name} size="lg" uri={imageUrl} />
+          {isSavingPhoto ? (
+            <View className="absolute inset-0 items-center justify-center rounded-full bg-black/40">
+              <Spinner color="#ffffff" />
+            </View>
+          ) : null}
+          <View className="absolute -right-1 -bottom-1 size-7 items-center justify-center rounded-full border-2 border-surface bg-brand">
+            <Ionicons color={INK} name="camera" size={14} />
+          </View>
+        </Pressable>
         <View className="flex-1">
           <Text
             className="font-black text-foreground text-xl"
@@ -82,14 +157,18 @@ export function ProfileScreen() {
         value={locale}
       />
 
-      <SectionLabel>{t("profile.security")}</SectionLabel>
-      <Group>
-        <GroupRow
-          isFirst
-          label={t("profile.changePassword")}
-          onPress={() => setIsChangingPassword(true)}
-        />
-      </Group>
+      {hasPassword ? (
+        <>
+          <SectionLabel>{t("profile.security")}</SectionLabel>
+          <Group>
+            <GroupRow
+              isFirst
+              label={t("profile.changePassword")}
+              onPress={() => setIsChangingPassword(true)}
+            />
+          </Group>
+        </>
+      ) : null}
 
       <SectionLabel>{t("profile.help")}</SectionLabel>
       <Group>
@@ -103,6 +182,34 @@ export function ProfileScreen() {
           tone="danger"
         />
       </Group>
+
+      <Sheet
+        onClose={() => setIsPhotoMenuOpen(false)}
+        title={t("photo.title")}
+        visible={isPhotoMenuOpen}
+      >
+        <Group>
+          <GroupRow
+            isFirst
+            label={t("photo.take")}
+            onPress={() => choosePhoto("camera")}
+          />
+          <GroupRow
+            label={t("photo.pick")}
+            onPress={() => choosePhoto("library")}
+          />
+          {imageUrl ? (
+            <GroupRow
+              label={t("photo.remove")}
+              onPress={() => {
+                setIsPhotoMenuOpen(false);
+                removePhoto.mutate();
+              }}
+              tone="danger"
+            />
+          ) : null}
+        </Group>
+      </Sheet>
 
       <Sheet
         onClose={() => setIsChangingPassword(false)}

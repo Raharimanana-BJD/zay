@@ -1,46 +1,28 @@
 import { useForm } from "@tanstack/react-form";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import { useToast } from "heroui-native";
-import { useEffect } from "react";
 import { Image, Text, View } from "react-native";
 import z from "zod";
 import { Field } from "@/components/auth-fields";
 import { openVerification } from "@/components/auth-shell";
+import { GoogleButton, useGoogleErrorToast } from "@/components/google-button";
 import { KeyboardAwareScrollView, SafeAreaView } from "@/components/styled";
 import { Action, TextLink } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/lib/i18n";
-import { ENV } from "../../src/env";
 
 const MIN_PASSWORD = 8;
 
 export default function SignInScreen() {
   const { t } = useI18n();
   const { toast } = useToast();
-  const { error: oauthError } = useLocalSearchParams<{ error?: string }>();
 
   const schema = z.object({
     email: z.email(t("auth.emailInvalid")),
     password: z.string().min(MIN_PASSWORD, t("auth.passwordInvalid")),
   });
 
-  // Google only opens accounts that exist, and comes back here with an error otherwise.
-  useEffect(() => {
-    if (oauthError) {
-      toast.show({ variant: "danger", label: t("auth.googleFailed") });
-    }
-  }, [oauthError, toast, t]);
-
-  const signInWithGoogle = async () => {
-    const result = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: "/",
-      errorCallbackURL: "/connexion?error=google",
-    });
-    if (result.error) {
-      toast.show({ variant: "danger", label: t("auth.googleFailed") });
-    }
-  };
+  useGoogleErrorToast();
 
   const form = useForm({
     defaultValues: { email: "", password: "" },
@@ -133,14 +115,7 @@ export default function SignInScreen() {
               />
             )}
           </form.Subscribe>
-          {ENV.EXPO_PUBLIC_GOOGLE_SIGN_IN ? (
-            <Action
-              icon="logo-google"
-              label={t("auth.google")}
-              onPress={signInWithGoogle}
-              variant="secondary"
-            />
-          ) : null}
+          <GoogleButton />
           <TextLink
             label={t("auth.createAccount")}
             onPress={() => router.push("/inscription")}

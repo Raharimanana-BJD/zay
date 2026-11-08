@@ -2,11 +2,12 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect } from "expo-router";
-import { Spinner, useToast } from "heroui-native";
+import { useToast } from "heroui-native";
 import { useCallback, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import { Field } from "@/components/auth-fields";
+import { DocumentsBlock } from "@/components/documents-block";
 import { Sheet } from "@/components/sheet";
 import {
   Action,
@@ -21,12 +22,10 @@ import {
   Stepper,
   Title,
 } from "@/components/ui";
-import { authClient } from "@/lib/auth-client";
 import { type TKey, useI18n } from "@/lib/i18n";
+import { uploadFile } from "@/lib/upload";
 import { useErrorToast } from "@/lib/use-action";
 import { trpc, trpcClient } from "@/utils/trpc";
-
-import { ENV } from "../../../src/env";
 
 const IMAGE_QUALITY = 0.6;
 
@@ -52,7 +51,7 @@ const EMPTY_VEHICLE: VehicleForm = {
 };
 
 /** Sends one picture, compressed for a weak network, and returns its storage key. */
-async function pickAndUpload(kind: "doc" | "photo"): Promise<string | null> {
+async function pickAndUpload(kind: "photo"): Promise<string | null> {
   const permission = await ImagePicker.requestCameraPermissionsAsync();
   const options: ImagePicker.ImagePickerOptions = {
     mediaTypes: ["images"],
@@ -65,25 +64,7 @@ async function pickAndUpload(kind: "doc" | "photo"): Promise<string | null> {
   if (picked.canceled || !asset) {
     return null;
   }
-  const file = await fetch(asset.uri);
-  const cookie = await authClient.getCookie();
-  const response = await fetch(`${ENV.EXPO_PUBLIC_SERVER_URL}/files/${kind}`, {
-    method: "POST",
-    credentials: "omit",
-    headers: {
-      "Content-Type": "application/octet-stream",
-      ...(cookie ? { Cookie: cookie } : {}),
-    },
-    body: await file.blob(),
-  });
-  const body = (await response.json().catch(() => ({}))) as {
-    code?: string;
-    key?: string;
-  };
-  if (!(response.ok && body.key)) {
-    throw new Error(body.code ?? "UPLOAD_FAILED");
-  }
-  return body.key;
+  return await uploadFile(asset.uri, kind);
 }
 
 type Verification =
@@ -101,72 +82,8 @@ const PILL_TONE = {
   suspended: "danger",
 } as const;
 
-const TEXT_TONE = {
-  approved: "text-success",
-  changes_requested: "text-brand-ink",
-  pending: "text-brand-ink",
-  rejected: "text-danger",
-  suspended: "text-danger",
-} as const;
-
 const verification = (value: string): Verification =>
   value in PILL_TONE ? (value as Verification) : "pending";
-
-function Status({ value }: { value: string }) {
-  const { t } = useI18n();
-  return <>{t(`verification.${value}` as TKey)}</>;
-}
-
-/** One required document: its state, and a button to send or replace it. */
-function DocumentRow({
-  label,
-  status,
-  isSending,
-  onSend,
-}: {
-  label: string;
-  status?: string;
-  isSending: boolean;
-  onSend: () => void;
-}) {
-  const { t } = useI18n();
-  const tone = status ? TEXT_TONE[verification(status)] : "text-brand-ink";
-  return (
-    <View className="min-h-20 flex-row items-center gap-4 rounded-3xl bg-surface p-4 shadow-black/5 shadow-sm">
-      <View className="size-12 items-center justify-center rounded-2xl bg-surface-tertiary">
-        <Ionicons color={INK} name="document-text-outline" size={20} />
-      </View>
-      <View className="flex-1 gap-0.5">
-        <Text className="font-bold text-base text-foreground" numberOfLines={2}>
-          {label}
-        </Text>
-        <Text className={`font-bold text-sm ${tone}`}>
-          {status ? <Status value={status} /> : t("dossier.missing")}
-        </Text>
-      </View>
-      <Pressable
-        accessibilityLabel={`${status ? t("dossier.replace") : t("dossier.send")}, ${label}`}
-        accessibilityRole="button"
-        accessibilityState={{ busy: isSending, disabled: isSending }}
-        className={`min-h-11 min-w-24 items-center justify-center rounded-xl px-4 active:opacity-80 ${
-          status ? "border border-border bg-surface" : "bg-foreground"
-        }`}
-        disabled={isSending}
-        onPress={onSend}
-      >
-        {isSending ? (
-          <Spinner color={status ? INK : "#ffffff"} size="sm" />
-        ) : (
-          <Text
-            className={`font-bold text-sm ${status ? "text-foreground" : "text-white"}`}
-          >
-            {status ? t("dossier.replace") : t("dossier.send")}
-          </Text>
-        )}
-      </Pressable>
-    </View>
-  );
-}
 
 export default function DossierScreen() {
   const { t } = useI18n();
@@ -208,25 +125,6 @@ export default function DossierScreen() {
     onError: showError,
     onSettled: () => refetch(),
   });
-
-  const uploadDocument = async (typeCode: string) => {
-    setUploading(typeCode);
-    try {
-      const key = await pickAndUpload("doc");
-      if (key) {
-        await trpcClient.driver.attachDocument.mutate({
-          typeCode: typeCode as never,
-          storageKey: key,
-        });
-        toast.show({ variant: "success", label: t("dossier.sent") });
-        await refetch();
-      }
-    } catch (error) {
-      showError(error);
-    } finally {
-      setUploading(null);
-    }
-  };
 
   const uploadPhoto = async () => {
     setUploading("photo");
@@ -368,22 +266,7 @@ export default function DossierScreen() {
         </Pressable>
       </View>
 
-      <SectionLabel>{t("dossier.documents")}</SectionLabel>
-      <Muted>{t("dossier.documentsHint")}</Muted>
-      <View className="gap-3">
-        {data.requiredDocuments.map((typeCode) => {
-          const document = data.documents.find((d) => d.typeCode === typeCode);
-          return (
-            <DocumentRow
-              isSending={uploading === typeCode}
-              key={typeCode}
-              label={t(`document.${typeCode}` as TKey)}
-              onSend={() => uploadDocument(typeCode)}
-              status={document?.verificationStatus}
-            />
-          );
-        })}
-      </View>
+      <DocumentsBlock dossier={data} onSent={refetch} />
       <Sheet
         onClose={() => setForm(null)}
         title={form?.id ? t("common.edit") : t("dossier.addVehicle")}

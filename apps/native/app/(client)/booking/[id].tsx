@@ -6,9 +6,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Spinner, useToast } from "heroui-native";
 import { useEffect, useRef, useState } from "react";
 import { Linking, ScrollView, Text, View } from "react-native";
-import { AuthImage } from "@/components/auth-image";
+import { AuthImage, Avatar } from "@/components/auth-image";
 import { OfflineBanner } from "@/components/offline-banner";
 import {
+  currentPlace,
   type Place,
   PlacePicker,
   toPlaceInput,
@@ -270,9 +271,7 @@ function ActiveRide({
       {driver ? (
         <Card>
           <View className="flex-row items-center gap-3">
-            {driver.photoUrl ? (
-              <AuthImage label={driver.model} uri={driver.photoUrl} />
-            ) : null}
+            <Avatar name={driver.name} uri={driver.imageUrl} />
             <View className="flex-1">
               <Text className="font-bold text-foreground text-lg">
                 {driver.name}
@@ -283,6 +282,9 @@ function ActiveRide({
                 {driver.registration ? ` · ${driver.registration}` : ""}
               </Muted>
             </View>
+            {driver.photoUrl ? (
+              <AuthImage label={driver.model} uri={driver.photoUrl} />
+            ) : null}
           </View>
           <Row
             label={t("booking.agreed")}
@@ -509,7 +511,18 @@ export default function BookingScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top", "bottom"]}>
       <View className="h-[30%]">
-        <ZayMap label={t("home.map")} markers={markers} />
+        <ZayMap
+          fullscreen={{
+            summary: {
+              title: t(`status.${booking.status}` as TKey),
+              detail: `${booking.pickup.label} → ${booking.destination.label}`,
+              value: formatAr(booking.agreedPriceAr),
+            },
+            locate: () => currentPlace(t("place.myPosition")),
+          }}
+          label={t("home.map")}
+          markers={markers}
+        />
       </View>
       <ScrollView
         contentContainerClassName="gap-3 p-4 pb-8"

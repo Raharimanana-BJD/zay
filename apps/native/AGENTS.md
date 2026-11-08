@@ -16,6 +16,10 @@ The single Zay mobile app, built with Expo and React Native, for both clients an
 | `lib/i18n/` | French and Malagasy dictionaries, and `useI18n` |
 | `lib/use-action.ts` | Sends a sensitive action with a request id, so a retry does not act twice |
 | `lib/driver-location.ts` | Sends the driver position to the server |
+| `lib/upload.ts` | Sends a file to `POST /files/:kind` and returns its key |
+| `components/splash.tsx` | The animated splash shown after the native one, until the role is known |
+| `components/complete-profile.tsx` | The blocking "Compléter mon profil" screen for an account without a phone |
+| `components/documents-block.tsx` | The driver documents block: prepare each file, then send them all |
 | `app.json` | Expo config: scheme, Android package, plugins |
 | `babel-plugins/hermes-async-arrow-rest-params.js` | Temporary Hermes workaround |
 
@@ -38,11 +42,14 @@ bun run check-types
 - The app is light theme only, and screens read the server again every 3 seconds. There are no push notifications yet.
 - Change native settings in `app.json`. The `android/` and `ios/` folders are generated and ignored by git, so edits made there are lost.
 - Client env values must be public and start with `EXPO_PUBLIC_`. Declare them in `.env.schema`.
+- `EXPO_PUBLIC_SERVER_URL` defaults to `http://localhost:3000`. A release build runs with `NODE_ENV=production` and reads the production URL from the committed `.env.production`. A personal `.env` overrides both in development.
 
 ## Gotchas
 
 - Native requests send the session cookie by hand: `utils/trpc.ts` uses `credentials: "omit"` and adds the cookie from `authClient.getCookie()`. Keep this for any new client that calls the server.
-- On a real phone, `EXPO_PUBLIC_SERVER_URL` must be an address the phone can reach, not `localhost`.
+- On a real phone, `EXPO_PUBLIC_SERVER_URL` must be an address the phone can reach, not `localhost`. Over USB, `adb reverse tcp:3000 tcp:3000` (and `tcp:8081` for Metro) makes `localhost` work, and setting `EXPO_PUBLIC_SERVER_URL=http://localhost:3000` on the `expo start` command overrides `.env` without editing it.
+- A new native module (like `expo-document-picker`) or a splash change in `app.json` needs `bunx expo prebuild -p android` then a new `bun run android`; the old dev build crashes on the missing module.
+- The "Continuer avec Google" button shows only when `EXPO_PUBLIC_GOOGLE_SIGN_IN=true`, and the server also needs its Google keys.
 - If the `scheme` in `app.json` changes, update `trustedOrigins` in `packages/auth/src/index.ts` too.
 - `com.anonymous.zayapp` in `app.json` is still a placeholder package name.
 - There is no `eas.json` yet, so EAS builds are not set up.
@@ -61,5 +68,6 @@ bun run check-types
 - [eas-workflows](../../.agents/skills/eas-workflows/): `expo/skills`, EAS workflow files
 - [heroui-native](../../.agents/skills/heroui-native/): `heroui-inc/heroui`, the component library
 - [vercel-react-native-skills](../../.agents/skills/vercel-react-native-skills/): `vercel-labs/agent-skills`, React Native performance
+- Declined: `expo-document-picker` (covered by the Expo skills above, spec 0005)
 
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._

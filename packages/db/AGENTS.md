@@ -41,5 +41,6 @@ bun run db:studio    # open Drizzle Studio
 - `DATABASE_URL` is set in `apps/server/.env`, because `.env.schema` here imports it from `apps/server`.
 - `drizzle.config.ts` is the one file that reads `process.env`, after loading `varlock/auto-load`.
 - The password in `docker-compose.yml` is for local use only.
+- `user.phone` is nullable since spec 0005 (Google accounts start without one), and stays unique. Every read of the phone has to handle `null`.
 
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._

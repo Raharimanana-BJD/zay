@@ -104,7 +104,7 @@ function ClientsPage() {
                         </Link>
                       </TableCell>
                       <TableCell>{item.email}</TableCell>
-                      <TableCell>{item.phone}</TableCell>
+                      <TableCell>{item.phone ?? "Non renseigné"}</TableCell>
                       <TableCell>
                         {item.banned ? (
                           <Badge variant="destructive">Suspendu</Badge>

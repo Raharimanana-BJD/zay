@@ -83,12 +83,19 @@ spec [0001](../../specs/_root/0001-modele-donnees/index.md) · code in `packages
 
 ### 3. Application unique à deux rôles · in-progress
 Une même application pour le client et le chauffeur, avec ses espaces, sa navigation et le choix du rôle à l'inscription. Elle remplace les écrans de départ du projet.
-spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003) · code in `apps/native/app/`, `packages/api/src/routers/driver.ts`, `packages/api/src/index.ts`
+spec [0006](../../specs/_root/0006-inscription-unique-mode-chauffeur/index.md) · spec [0003](../../specs/_root/0003-application-mobile/index.md) · assumed decision (spec 0003, sauf les rôles) · code in `apps/native/app/`, `packages/api/src/routers/driver.ts`, `packages/api/src/index.ts`
 **Done when:** après connexion, un client et un chauffeur arrivent chacun dans leur espace, et un rôle ne peut pas ouvrir les écrans ni appeler les actions de l'autre.
-- [ ] Design it (spec): `/architect application unique à deux rôles`
+- [x] Design it (spec): `/architect inscription unique et mode chauffeur`
 - [x] Build it: `/develop application mobile`
   - [x] Inscription, rôle et espaces fermés côté serveur et côté écrans
+- [ ] Build it: `/develop inscription unique et mode chauffeur` (après la démo du 9/11)
+  - [ ] Migration : enums du dossier et du mode, colonnes, données existantes (AC-16)
+  - [ ] Serveur : gardes par mode, dossier, envoi, changement de mode, distribution (AC-1, AC-3, AC-4, AC-11, AC-13, AC-17)
+  - [ ] Mobile : inscription sans rôle, carte du profil, dossier, bienvenue, routage par mode (AC-1 à AC-5, AC-10, AC-12)
+  - [ ] Équipe et cas de retour : décisions, suspension, corrections, rejet, abandon, badge Clients (AC-6 à AC-9, AC-14, AC-15)
+  - [ ] Finition : mode hors ligne, `fr` et `mg`, seeds et scripts de vérification (AC-12, AC-16, AC-18)
 - [ ] Verify it: `/check verify application mobile`
+- [ ] Verify it: `/check verify inscription unique et mode chauffeur`
 
 ### 4. Temps réel et notifications · in-progress
 Comment demandes, offres et statuts arrivent sur les téléphones, y compris quand l'application est en arrière plan et sur un réseau faible.
@@ -151,11 +158,11 @@ Sept retouches après le nouveau design : splash animé, carte en plein écran, 
 spec [0005](../../specs/_root/0005-retouches-interface-mobile/index.md) · code in `apps/native/`, `apps/server/src/`, `packages/auth/`, `packages/api/src/routers/`, `apps/web/src/routes/admin/chauffeurs/`
 **Done when:** l'app s'ouvre sur le splash jaune animé, chaque carte s'agrandit, un nouvel utilisateur s'inscrit par Google puis complète son téléphone, chacun a sa photo, et un chauffeur envoie ses papiers en PDF d'un seul bouton pendant que l'équipe les lit et date leur expiration.
 - [x] Design it (spec): `/architect retouches de l'interface mobile`
-- [ ] Build it: `/develop retouches de l'interface mobile`
-  - [ ] Onglets en icônes, splash animé, carte plein écran (AC-1 à AC-4)
-  - [ ] Serveur de fichiers et photo de profil (AC-5 à AC-7, AC-14)
-  - [ ] Téléphone facultatif, inscription Google et écran de complétion (AC-8 à AC-11)
-  - [ ] Documents chauffeur : PDF, envoi groupé, bloc refait, back office et expiration (AC-12 à AC-17)
+- [x] Build it: `/develop retouches de l'interface mobile`
+  - [x] Onglets en icônes, splash animé, carte plein écran (AC-1 à AC-4)
+  - [x] Serveur de fichiers et photo de profil (AC-5 à AC-7, AC-14)
+  - [x] Téléphone facultatif, inscription Google et écran de complétion (AC-8 à AC-11)
+  - [x] Documents chauffeur : PDF, envoi groupé, bloc refait, back office et expiration (AC-12 à AC-17)
 - [ ] Verify it: `/check verify retouches de l'interface mobile`
 
 ## Slice 1: La course de bout en bout
@@ -381,6 +388,8 @@ Hors de cette version, gardé ici pour que le plan reste honnête.
 - **Sécurité du back office :** changement forcé du mot de passe temporaire, double authentification pour les admins · from spec 0002
 - **Protections issues de la relecture :** bouton d'urgence, numéros cachés avant attribution, une seule demande active par client
 - **Changement de destination pendant la course :** · needs a decision
+- **Nettoyage des fichiers d'un dossier chauffeur abandonné :** · from spec 0006
+- **Limite des nouvelles demandes chauffeur après rejet :** · from spec 0006
 - **Version 2 du cahier :** réservation à l'avance, favoris, avis, statistiques de revenus détaillées, dépenses et maintenance, Mobile Money pour les courses, promotions
 - **Version 3 du cahier :** plusieurs villes, flotte et propriétaires, fidélité, analyses avancées, tarification avancée, partenariats
 

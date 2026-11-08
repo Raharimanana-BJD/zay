@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 
 import { OfflineBanner } from "@/components/offline-banner";
+import { currentPlace } from "@/components/place-picker";
 import { ReasonSheet } from "@/components/reason-sheet";
 import { Sheet } from "@/components/sheet";
 import {
@@ -340,13 +341,34 @@ export default function DriverHome() {
     );
   }
 
+  const offer = data?.offer;
+  const mapSummary = offer
+    ? {
+        title: t("driver.newRequest"),
+        detail: `${offer.pickup} → ${offer.destination}`,
+        value: formatAr(offer.currentPriceAr),
+      }
+    : { title: t(data?.isOnline ? "driver.online" : "map.offline") };
+  const locateDriver = async () => {
+    const { coords } = location;
+    if (coords) {
+      return { lat: coords.latitude, lng: coords.longitude };
+    }
+    // Offline, the position is not followed: read it once.
+    return await currentPlace(t("place.myPosition"));
+  };
+
   const blockers = data?.blockers ?? [];
 
   return (
     <Screen>
       <Greeting name={me.data?.name} />
       <View className="h-44 overflow-hidden rounded-3xl bg-map">
-        <ZayMap label={t("home.map")} markers={markers} />
+        <ZayMap
+          fullscreen={{ summary: mapSummary, locate: locateDriver }}
+          label={t("home.map")}
+          markers={markers}
+        />
       </View>
       <OfflineBanner />
       {location.state === "denied" ? (

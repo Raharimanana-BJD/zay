@@ -1,7 +1,7 @@
 # 0005. Retouches de l'interface mobile
 
 **Date**: 2026-11-07
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 

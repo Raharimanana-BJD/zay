@@ -25,6 +25,8 @@ export interface ActionValues {
   amount?: number;
   /** One per opening of the window, so a double click only acts once. */
   clientRequestId: string;
+  /** A day as AAAA-MM-JJ, only when the window asks for one. Empty is undefined. */
+  date?: string;
   reasonCode?: string;
   reasonNote?: string;
 }
@@ -33,6 +35,10 @@ interface ActionDialogProps {
   amountLabel?: string;
   confirmLabel: string;
   danger?: boolean;
+  /** An optional day field, like an expiry date. `dateMin` is the first day allowed. */
+  dateHint?: string;
+  dateLabel?: string;
+  dateMin?: string;
   description?: ReactNode;
   disabled?: boolean;
   label: string;
@@ -47,11 +53,56 @@ interface ActionDialogProps {
   triggerVariant?: "default" | "secondary" | "destructive" | "outline";
 }
 
+/** Empty is allowed. The ISO day strings compare in calendar order. */
+const isDayAllowed = (day: string, min: string | undefined) =>
+  day === "" || min === undefined || day >= min;
+
+function DateField({
+  hint,
+  isValid,
+  label,
+  min,
+  onChange,
+  value,
+}: {
+  hint?: string;
+  isValid: boolean;
+  label: string;
+  min?: string;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  const id = useId();
+  const hintId = useId();
+  return (
+    <div className="grid gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        aria-describedby={hint ? hintId : undefined}
+        aria-invalid={!isValid}
+        id={id}
+        min={min}
+        onChange={(event) => onChange(event.target.value)}
+        type="date"
+        value={value}
+      />
+      {hint ? (
+        <p className="text-muted-foreground text-sm" id={hintId}>
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 /** The window behind every sensitive action: reason, note, amount, then confirmation. */
 export default function ActionDialog({
   amountLabel,
   confirmLabel,
   danger = false,
+  dateHint,
+  dateLabel,
+  dateMin,
   description,
   disabled = false,
   label,
@@ -72,6 +123,7 @@ export default function ActionDialog({
   const [reasonCode, setReasonCode] = useState<string>();
   const [note, setNote] = useState("");
   const [amount, setAmount] = useState("");
+  const [date, setDate] = useState("");
   const [problem, setProblem] = useState<ReactNode>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -80,6 +132,7 @@ export default function ActionDialog({
     setReasonCode(undefined);
     setNote("");
     setAmount("");
+    setDate("");
     setProblem(null);
     setOpen(true);
   };
@@ -93,10 +146,12 @@ export default function ActionDialog({
       Number.isInteger(amountValue) &&
       amountValue >= 0 &&
       amountValue <= MAX_AMOUNT_AR);
+  const dateValid = isDayAllowed(date, dateMin);
   const canSubmit =
     (reasons === undefined || reasonCode !== undefined) &&
     (!needsNote || trimmed.length > 0) &&
-    amountValid;
+    amountValid &&
+    dateValid;
 
   const submit = async () => {
     setIsSaving(true);
@@ -107,6 +162,7 @@ export default function ActionDialog({
         reasonCode,
         reasonNote: trimmed || undefined,
         amount: amountLabel === undefined ? undefined : amountValue,
+        date: date || undefined,
       });
       if (shown) {
         setProblem(shown);
@@ -170,6 +226,16 @@ export default function ActionDialog({
                   value={amount}
                 />
               </div>
+            ) : null}
+            {dateLabel ? (
+              <DateField
+                hint={dateHint}
+                isValid={dateValid}
+                label={dateLabel}
+                min={dateMin}
+                onChange={setDate}
+                value={date}
+              />
             ) : null}
             {showNote ? (
               <div className="grid gap-2">

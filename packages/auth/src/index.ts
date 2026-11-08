@@ -59,6 +59,7 @@ const toMailLocale = (value: unknown): MailLocale =>
 const E164_PHONE = /^\+[1-9]\d{7,14}$/;
 const SIGN_UP_PATH = "/sign-up/email";
 const UPDATE_USER_PATH = "/update-user";
+const SOCIAL_SIGN_IN_PATH = "/sign-in/social";
 
 // Passwordless sign in and email change are not part of the product. Every HTTP
 // route of the admin plugin stays closed too: the server reaches these actions
@@ -90,6 +91,38 @@ const phoneTakenError = () =>
     message: "This phone number is already used by another account.",
   });
 
+/** The fields a sign up or a profile update may not carry, or may not drop. */
+function assertProfileFields(path: string, body: { phone?: unknown }) {
+  // The photo is a file key only `me.setImage` checks and writes (spec 0005).
+  if ("image" in body) {
+    throw new APIError("BAD_REQUEST", {
+      code: "IMAGE_NOT_ALLOWED",
+      message: "The profile photo is changed through me.setImage.",
+    });
+  }
+  // Better Auth only rejects a truthy role, so an empty one needs this check.
+  if (path === SIGN_UP_PATH && "role" in body) {
+    throw new APIError("BAD_REQUEST", {
+      code: "ROLE_NOT_ALLOWED",
+      message: "The role cannot be chosen at sign up.",
+    });
+  }
+  // Only a Google account starts without a phone; the email form needs one.
+  const isMissingPhone =
+    path === SIGN_UP_PATH &&
+    (typeof body.phone !== "string" || body.phone.trim() === "");
+  const isClearedPhone =
+    path === UPDATE_USER_PATH &&
+    "phone" in body &&
+    typeof body.phone !== "string";
+  if (isMissingPhone || isClearedPhone) {
+    throw new APIError("BAD_REQUEST", {
+      code: "PHONE_REQUIRED",
+      message: "A phone number in international format is required.",
+    });
+  }
+}
+
 export function createAuth(
   env: AuthConfig,
   database: Database,
@@ -101,8 +134,10 @@ export function createAuth(
           google: {
             clientId: env.GOOGLE_CLIENT_ID,
             clientSecret: env.GOOGLE_CLIENT_SECRET,
-            // The phone stays required, so Google only opens existing accounts.
-            disableImplicitSignUp: true,
+            // Google opens new accounts too; the phone comes later (spec 0005).
+            disableImplicitSignUp: false,
+            // The photo is a file only `me.setImage` writes, never a Google URL.
+            mapProfileToUser: () => ({ image: undefined }),
           },
         }
       : undefined;
@@ -144,7 +179,52 @@ export function createAuth(
     },
     socialProviders: google,
     account: {
-      accountLinking: { enabled: true, trustedProviders: ["google"] },
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google"],
+        // An unverified account with this email gets linked, then cleaned below.
+        requireLocalEmailVerified: false,
+      },
+    },
+    databaseHooks: {
+      account: {
+        create: {
+          // Someone may have signed up first with another person's email. When
+          // the real owner arrives through Google, that password, its sessions
+          // and its phone go away, and the email counts as verified (spec 0005).
+          // This runs before the link is written: if the cleanup fails, the
+          // Google account is not linked at all.
+          before: async (account, ctx) => {
+            if (account.providerId !== "google" || !(ctx && account.userId)) {
+              return;
+            }
+            const { adapter, internalAdapter, logger } = ctx.context;
+            const { userId } = account;
+            try {
+              const owner = await internalAdapter.findUserById(userId);
+              if (!owner || owner.emailVerified) {
+                return;
+              }
+              await adapter.deleteMany({
+                model: "account",
+                where: [
+                  { field: "userId", value: userId },
+                  { field: "providerId", value: "credential" },
+                ],
+              });
+              await internalAdapter.deleteUserSessions(userId);
+              // The owner enters their own phone through `me.completeProfile`.
+              await internalAdapter.updateUser(userId, {
+                emailVerified: true,
+                phone: null,
+              });
+            } catch (error) {
+              logger.error("Google link cleanup failed", error);
+              throw error;
+            }
+          },
+        },
+      },
     },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
@@ -158,9 +238,10 @@ export function createAuth(
     },
     user: {
       additionalFields: {
+        // A Google account starts without one; `me.completeProfile` sets it (spec 0005).
         phone: {
           type: "string",
-          required: true,
+          required: false,
           unique: true,
           validator: {
             input: z
@@ -181,18 +262,19 @@ export function createAuth(
     },
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
+        // Nobody slips a phone or a role through the OAuth state.
+        // A returned context is merged into the request, so the key is deleted.
+        if (ctx.path === SOCIAL_SIGN_IN_PATH && ctx.body) {
+          // biome-ignore lint/performance/noDelete: the key must be gone, not undefined.
+          delete (ctx.body as { additionalData?: unknown }).additionalData;
+          return;
+        }
         if (ctx.path !== SIGN_UP_PATH && ctx.path !== UPDATE_USER_PATH) {
           return;
         }
         const body = (ctx.body ?? {}) as { phone?: unknown };
 
-        // Better Auth only rejects a truthy role, so an empty one needs this check.
-        if (ctx.path === SIGN_UP_PATH && "role" in body) {
-          throw new APIError("BAD_REQUEST", {
-            code: "ROLE_NOT_ALLOWED",
-            message: "The role cannot be chosen at sign up.",
-          });
-        }
+        assertProfileFields(ctx.path, body);
         if (typeof body.phone !== "string") {
           return;
         }

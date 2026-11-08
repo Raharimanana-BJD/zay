@@ -2,7 +2,7 @@ import type { Context as ApiContext } from "@zay-app/api/context";
 import type { Context as HonoContext } from "hono";
 
 import { files } from "./files";
-import { auth, db } from "./services";
+import { auth, db, mailer } from "./services";
 
 export type CreateContextOptions = {
   context: HonoContext;
@@ -18,6 +18,7 @@ export async function createContext({
     db,
     files,
     headers,
+    mailer,
     session,
   };
 }

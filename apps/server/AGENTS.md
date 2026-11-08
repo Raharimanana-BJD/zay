@@ -43,7 +43,8 @@ bun run verify:mobile  # runs the mobile flows and scenarios A to G against the 
 - `auth:generate` loads the auth instance from `src/services.ts`, so that file must keep exporting `auth`.
 - CORS allows a single origin, `CORS_ORIGIN`, with credentials on. This is the web app's address.
 - Files sent by drivers go to `uploads/`, which git ignores. A hosted server needs a disk that survives a restart.
-- Keys starting with `up-doc-` are for the team only. Keys starting with `up-photo-` can be read by any signed in account.
+- Read rights follow the key prefix: `up-doc-` goes to the team and the driver who owns it, `up-photo-` to any signed in account, `up-avatar-<userId>-` to its owner, the team, and the other side of an active ride. Size and formats per kind live in `UPLOAD_KINDS` in `src/files.ts`; the format is read from the first bytes, never the file name.
+- Image answers carry `Content-Security-Policy: sandbox`. PDFs do not, because Chrome refuses to show its PDF viewer for a sandboxed response; they rely on the browser viewer, which runs no page script.
 - The seeds and verification scripts write to the database, so run them on a test database.
 
 ## Agent skills

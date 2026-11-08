@@ -31,7 +31,7 @@ import { trpc, trpcClient } from "@/utils/trpc";
 type Category = "car" | "tuk_tuk" | "auto";
 const MAX_PASSENGERS = 4;
 /** The floating tab bar: its height plus the gap under it. */
-const TAB_BAR_SPACE = 104;
+const TAB_BAR_SPACE = 96;
 
 function PlaceField({
   label,
@@ -163,6 +163,25 @@ export default function BookScreen() {
       ? Boolean(quote.data?.quotes.length)
       : Boolean(quoteOf(category));
 
+  // Automatic picks the lowest price, like the server does.
+  const chosenQuote =
+    category === "auto"
+      ? quote.data?.quotes.reduce<(typeof quote.data.quotes)[number] | null>(
+          (lowest, row) =>
+            lowest && lowest.amountAr <= row.amountAr ? lowest : row,
+          null
+        )
+      : quoteOf(category);
+  const summary = quote.data
+    ? {
+        title: t("home.estimate", {
+          distance: formatDistance(quote.data.distanceM),
+        }),
+        value: chosenQuote ? formatAr(chosenQuote.amountAr) : undefined,
+      }
+    : undefined;
+  const locate = () => currentPlace(t("place.myPosition"));
+
   let searchLabel = t("home.search");
   if (!destination) {
     searchLabel = t("home.chooseDestination");
@@ -181,6 +200,7 @@ export default function BookScreen() {
         <Greeting name={me.data?.name} />
         <View className="h-64 overflow-hidden rounded-3xl bg-map">
           <ZayMap
+            fullscreen={{ summary, locate }}
             label={t("home.map")}
             line={quote.data?.line}
             markers={markers}

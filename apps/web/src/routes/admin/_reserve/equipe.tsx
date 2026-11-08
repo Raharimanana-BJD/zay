@@ -225,7 +225,7 @@ function TeamPage() {
                   <TableRow key={item.id}>
                     <TableCell>{item.name}</TableCell>
                     <TableCell>{item.email}</TableCell>
-                    <TableCell>{item.phone}</TableCell>
+                    <TableCell>{item.phone ?? "Non renseigné"}</TableCell>
                     <TableCell>{ROLE_LABELS[item.role ?? ""]}</TableCell>
                     <TableCell>
                       {item.banned ? (

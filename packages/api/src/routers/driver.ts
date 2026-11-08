@@ -36,7 +36,14 @@ import {
   PRICE_ADJUSTMENT_REASONS,
 } from "../domain/codes";
 import { ACTIVE_RIDE, OPEN_OFFERS } from "../domain/dispatch";
+import {
+  type FileAccess,
+  fileKindOf,
+  UPLOAD_DOC_KEY,
+  UPLOAD_PHOTO_KEY,
+} from "../domain/files";
 import { conflict, driverAnswer } from "../domain/offers";
+import { registerDriver } from "../domain/profile";
 import {
   advanceRide,
   answerDestinationChange,
@@ -44,7 +51,7 @@ import {
   withdrawByDriver,
 } from "../domain/rides";
 import { faresOf, latestSettings, pointSql } from "../domain/trip";
-import { driverProcedure, protectedProcedure, router } from "../index";
+import { completeProcedure, driverProcedure, router } from "../index";
 import {
   assertReason,
   isUniqueViolation,
@@ -62,8 +69,6 @@ import {
 
 const MS_PER_S = 1000;
 const SHORT_TEXT = 80;
-const UPLOAD_DOC_KEY = /^up-doc-[a-z0-9-]+\.(jpg|png)$/;
-const UPLOAD_PHOTO_KEY = /^up-photo-[a-z0-9-]+\.(jpg|png)$/;
 
 const relationSchema = z.enum(["owner", "renter", "employee"]);
 const zone = sql.raw(`'${TIME_ZONE}'`);
@@ -214,7 +219,12 @@ async function readOpenOffer(db: Database, driverId: string, now: Date) {
   };
 }
 
-async function readRide(db: Database, driverId: string, where: SQL) {
+async function readRide(
+  db: Database,
+  files: FileAccess,
+  driverId: string,
+  where: SQL
+) {
   const labels = placeLabels();
   const [row] = await labels
     .joins(
@@ -232,6 +242,7 @@ async function readRide(db: Database, driverId: string, where: SQL) {
           destination: labels.destination,
           clientName: user.name,
           clientPhone: user.phone,
+          clientImage: user.image,
           paymentStatus: payment.status,
           declaredAmountAr: payment.declaredAmountAr,
         })
@@ -263,9 +274,12 @@ async function readRide(db: Database, driverId: string, where: SQL) {
         eq(destinationChange.status, "pending")
       )
     );
-  const { pickupPoint, destinationPoint, ...rest } = row;
+  const { pickupPoint, destinationPoint, clientImage, ...rest } = row;
   return {
     ...rest,
+    clientImageUrl: clientImage
+      ? ((await files.getUrl(clientImage))?.url ?? null)
+      : null,
     pickupLat: pickupPoint.y,
     pickupLng: pickupPoint.x,
     destinationLat: destinationPoint.y,
@@ -294,34 +308,12 @@ const vehicleInput = z.object({
 
 export const driverRouter = router({
   /** The sign up form creates a client, and this turns it into a driver once. */
-  register: protectedProcedure
+  register: completeProcedure
     .input(z.object({ employmentRelation: relationSchema }))
     .mutation(async ({ ctx, input }) => {
-      const { id, role } = ctx.session.user;
-      if (role === "driver") {
-        return;
-      }
-      if (role !== "client") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "ROLE_NOT_ALLOWED" });
-      }
-      const [ride] = await ctx.db
-        .select({ id: booking.id })
-        .from(booking)
-        .where(eq(booking.clientId, id))
-        .limit(1);
-      if (ride) {
-        throw conflict("CLIENT_HAS_BOOKINGS");
-      }
-      await ctx.db.transaction(async (tx) => {
-        await tx
-          .insert(driverProfile)
-          .values({
-            userId: id,
-            employmentRelation: input.employmentRelation,
-          })
-          .onConflictDoNothing();
-        await tx.update(user).set({ role: "driver" }).where(eq(user.id, id));
-      });
+      await ctx.db.transaction((tx) =>
+        registerDriver(tx, ctx.session.user, input.employmentRelation)
+      );
     }),
 
   /** Everything the driver's home needs, read again every few seconds. */
@@ -337,6 +329,7 @@ export const driverRouter = router({
       .where(eq(driverPosition.driverId, driverId));
     const ride = await readRide(
       db,
+      ctx.files,
       driverId,
       inArray(booking.status, [...ACTIVE_RIDE])
     );
@@ -463,6 +456,7 @@ export const driverRouter = router({
     .query(async ({ ctx, input }) => {
       const ride = await readRide(
         ctx.db,
+        ctx.files,
         ctx.session.user.id,
         eq(booking.id, input.id)
       );
@@ -591,12 +585,14 @@ export const driverRouter = router({
       .from(vehicle)
       .where(and(eq(vehicle.driverId, driverId), isNull(vehicle.archivedAt)))
       .orderBy(asc(vehicle.createdAt));
-    const documents = await db
+    const currentDocuments = await db
       .select({
         id: driverDocument.id,
         typeCode: driverDocument.typeCode,
+        storageKey: driverDocument.storageKey,
         verificationStatus: driverDocument.verificationStatus,
         expiresAt: driverDocument.expiresAt,
+        sentAt: driverDocument.createdAt,
       })
       .from(driverDocument)
       .where(
@@ -605,6 +601,45 @@ export const driverRouter = router({
           isNull(driverDocument.replacedAt)
         )
       );
+    const documentDecisions =
+      currentDocuments.length === 0
+        ? []
+        : await db
+            .select({
+              subjectId: verificationDecision.subjectId,
+              reasonCode: verificationDecision.reasonCode,
+              reasonNote: verificationDecision.reasonNote,
+            })
+            .from(verificationDecision)
+            .where(
+              and(
+                eq(verificationDecision.subject, "document"),
+                inArray(
+                  verificationDecision.subjectId,
+                  currentDocuments.map((doc) => doc.id)
+                )
+              )
+            )
+            .orderBy(
+              desc(verificationDecision.createdAt),
+              desc(verificationDecision.id)
+            );
+    const documents = await Promise.all(
+      currentDocuments.map(async ({ storageKey, ...doc }) => {
+        // Rows come newest first, so the first match is the latest decision.
+        const latest = documentDecisions.find(
+          (row) => row.subjectId === doc.id
+        );
+        const file = await ctx.files.getUrl(storageKey);
+        return {
+          ...doc,
+          fileKind: fileKindOf(storageKey),
+          fileUrl: file?.url ?? null,
+          reasonCode: latest?.reasonCode ?? null,
+          reasonNote: latest?.reasonNote ?? null,
+        };
+      })
+    );
     const [decision] = await db
       .select({
         status: verificationDecision.status,
@@ -748,13 +783,13 @@ export const driverRouter = router({
         .where(eq(driverProfile.userId, driverId));
     }),
 
-  /** A new file replaces the current one of this type, and needs a new check. */
+  /** A new file replaces the current one of this type, and needs a new check (with no date). */
   attachDocument: driverProcedure
     .input(
-      z.object({
+      // Strict: the expiry date is the team's to set, at approval.
+      z.strictObject({
         typeCode: z.enum(DRIVER_DOCUMENT_TYPES),
         storageKey: z.string().regex(UPLOAD_DOC_KEY),
-        expiresAt: z.iso.datetime().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -774,7 +809,6 @@ export const driverRouter = router({
           driverId,
           typeCode: input.typeCode,
           storageKey: input.storageKey,
-          expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
         });
         // The team asked for a correction: this sends the file back to its queue.
         await tx
