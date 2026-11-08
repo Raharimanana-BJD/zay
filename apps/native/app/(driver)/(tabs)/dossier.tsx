@@ -204,6 +204,14 @@ function VehicleCard({
                 .filter(Boolean)
                 .join(" · ")}
             </Muted>
+            {isActive ? (
+              <View className="mt-1.5 flex-row items-center gap-1.5">
+                <Ionicons color={INK} name="checkmark-circle" size={16} />
+                <Text className="font-semibold text-foreground text-sm">
+                  {t("dossier.inUse")}
+                </Text>
+              </View>
+            ) : null}
           </View>
           <Pill
             label={t(`verificationShort.${state}` as TKey)}
@@ -211,27 +219,19 @@ function VehicleCard({
           />
         </View>
         <View className="flex-row gap-2">
-          <View className="flex-1">
-            {isActive ? (
-              <View className="min-h-14 flex-row items-center justify-center gap-2 rounded-2xl bg-surface-tertiary px-3">
-                <Ionicons color={INK} name="checkmark-circle" size={18} />
-                <Text
-                  className="shrink font-bold text-foreground"
-                  numberOfLines={1}
-                >
-                  {t("dossier.inUse")}
-                </Text>
-              </View>
-            ) : (
+          {isActive ? null : (
+            <View className="flex-1">
               <Action label={t("dossier.useVehicle")} onPress={onUse} />
-            )}
+            </View>
+          )}
+          <View className={isActive ? "flex-1" : ""}>
+            <Action
+              icon="create-outline"
+              label={t("common.edit")}
+              onPress={onEdit}
+              variant="secondary"
+            />
           </View>
-          <Action
-            icon="create-outline"
-            label={t("common.edit")}
-            onPress={onEdit}
-            variant="secondary"
-          />
         </View>
       </View>
     </View>
