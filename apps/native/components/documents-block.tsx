@@ -322,6 +322,7 @@ export function DocumentsBlock({
   return (
     <>
       <Muted>{t("dossier.documentsHint")}</Muted>
+      <Muted>{t("dossier.vehiclePapersHint")}</Muted>
       <View className="flex-row flex-wrap justify-between gap-y-3">
         {requiredDocuments.map((typeCode) => (
           <DocumentTile

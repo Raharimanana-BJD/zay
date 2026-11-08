@@ -33,6 +33,7 @@ import z from "zod";
 import {
   CANCELLATION_REASONS,
   DRIVER_DOCUMENT_TYPES,
+  isVehicleDocumentType,
   PRICE_ADJUSTMENT_REASONS,
 } from "../domain/codes";
 import { ACTIVE_RIDE, OPEN_OFFERS } from "../domain/dispatch";
@@ -607,7 +608,14 @@ export const driverRouter = router({
       .where(
         and(
           eq(driverDocument.driverId, driverId),
-          isNull(driverDocument.replacedAt)
+          isNull(driverDocument.replacedAt),
+          // The driver's own papers, and those of the vehicle in use.
+          profile.activeVehicleId
+            ? or(
+                isNull(driverDocument.vehicleId),
+                eq(driverDocument.vehicleId, profile.activeVehicleId)
+              )
+            : isNull(driverDocument.vehicleId)
         )
       );
     const documentDecisions =
@@ -804,6 +812,20 @@ export const driverRouter = router({
     .mutation(async ({ ctx, input }) => {
       const driverId = ctx.session.user.id;
       await ctx.db.transaction(async (tx) => {
+        // A registration card or an insurance belongs to the vehicle in use, so the
+        // team can approve that vehicle with its own papers (spec 0002, AC-33).
+        let vehicleId: string | null = null;
+        if (isVehicleDocumentType(input.typeCode)) {
+          const [profile] = await tx
+            .select({ activeVehicleId: driverProfile.activeVehicleId })
+            .from(driverProfile)
+            .where(eq(driverProfile.userId, driverId))
+            .for("update");
+          if (!profile?.activeVehicleId) {
+            throw conflict("NO_ACTIVE_VEHICLE");
+          }
+          vehicleId = profile.activeVehicleId;
+        }
         await tx
           .update(driverDocument)
           .set({ replacedAt: new Date() })
@@ -811,11 +833,15 @@ export const driverRouter = router({
             and(
               eq(driverDocument.driverId, driverId),
               eq(driverDocument.typeCode, input.typeCode),
+              vehicleId
+                ? eq(driverDocument.vehicleId, vehicleId)
+                : isNull(driverDocument.vehicleId),
               isNull(driverDocument.replacedAt)
             )
           );
         await tx.insert(driverDocument).values({
           driverId,
+          vehicleId,
           typeCode: input.typeCode,
           storageKey: input.storageKey,
         });
