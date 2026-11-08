@@ -1,2 +1,173 @@
 @import "@fontsource-variable/inter";
 @import "@zay-app/ui/globals.css";
+
+/*
+ * Public landing page colours, taken from the mobile app (apps/native/global.css).
+ * Scoped to `.landing` so the back office tokens stay untouched (spec 0007, AC-11).
+ */
+.landing {
+  --landing-cream: #f5f3ee;
+  --landing-cream-deep: #eeebe4;
+  --landing-surface: #ffffff;
+  --landing-ink: #0a0a0a;
+  --landing-ink-soft: #2a2a2a;
+  --landing-muted: #5f5b53;
+  --landing-border: #e4e0d7;
+  --landing-border-strong: #cfc9bc;
+  --landing-yellow: #f7c910;
+  --landing-yellow-hover: #ffd83d;
+  --landing-yellow-soft: #fcefbf;
+  --landing-yellow-ink: #7a5800;
+  --landing-on-dark-muted: #c2bdb2;
+  color: var(--landing-ink);
+
+  color-scheme: light;
+  background-color: var(--landing-cream);
+}
+
+@theme inline {
+  --color-landing-cream: var(--landing-cream);
+  --color-landing-cream-deep: var(--landing-cream-deep);
+  --color-landing-surface: var(--landing-surface);
+  --color-landing-ink: var(--landing-ink);
+  --color-landing-ink-soft: var(--landing-ink-soft);
+  --color-landing-muted: var(--landing-muted);
+  --color-landing-border: var(--landing-border);
+  --color-landing-border-strong: var(--landing-border-strong);
+  --color-landing-yellow: var(--landing-yellow);
+  --color-landing-yellow-hover: var(--landing-yellow-hover);
+  --color-landing-yellow-soft: var(--landing-yellow-soft);
+  --color-landing-yellow-ink: var(--landing-yellow-ink);
+  --color-landing-on-dark-muted: var(--landing-on-dark-muted);
+}
+
+/*
+ * Landing motion (spec 0007). CSS only, composite-friendly properties, so it
+ * stays smooth on entry-level Android phones. One authored moment: the hero
+ * assembles itself once on load. Everything else is feedback or continuity.
+ */
+.landing {
+  --landing-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes landing-unveil {
+  from {
+    clip-path: inset(100% 0 0 0 round 2rem);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 2rem);
+  }
+}
+
+@keyframes landing-settle {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+}
+
+@keyframes landing-phone {
+  from {
+    opacity: 0;
+    transform: translateY(40px) rotate(3deg);
+  }
+}
+
+/* A nearby driver signal: a ring that leaves the dot and fades. */
+@keyframes landing-ping {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+
+.landing-rise {
+  animation: landing-rise 640ms var(--landing-ease-out) both;
+  animation-delay: calc(var(--rise-step, 0) * 70ms);
+}
+
+.landing-unveil {
+  animation: landing-unveil 720ms var(--landing-ease-out) 180ms both;
+}
+
+.landing-settle {
+  animation: landing-settle 760ms var(--landing-ease-out) 300ms both;
+}
+
+.landing-phone {
+  transform-origin: 50% 100%;
+  animation: landing-phone 820ms var(--landing-ease-out) 440ms both;
+}
+
+.landing-ping::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: var(--landing-yellow);
+  border-radius: inherit;
+  animation: landing-ping 1.6s var(--landing-ease-out) 1.2s 3 both;
+}
+
+/* The active language pill slides between FR and MG. */
+.landing-lang-pill {
+  transition: transform 260ms var(--landing-ease-out);
+}
+
+/* Press feedback on the download buttons. */
+.landing-press {
+  transition-timing-function: var(--landing-ease-out);
+  transition-duration: 150ms;
+  transition-property: color, background-color, transform;
+}
+
+.landing-press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-rise,
+  .landing-settle,
+  .landing-phone {
+    animation-name: landing-fade;
+    animation-duration: 400ms;
+  }
+
+  .landing-unveil {
+    animation: landing-fade 400ms ease-out both;
+  }
+
+  .landing-ping::after {
+    display: none;
+  }
+
+  .landing-lang-pill {
+    transition-duration: 0ms;
+  }
+
+  .landing-press:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+@keyframes landing-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.landing ::selection {
+  color: var(--landing-ink);
+  background-color: var(--landing-yellow);
+}
