@@ -33,6 +33,7 @@ _Ce sont des recommandations pour garder une construction ordonnée, pas des obl
 | 8 | Mise en ligne de la démo | Foundation | planned |
 | 31 | Authentification complète | Foundation | in-progress |
 | 32 | Retouches de l'interface mobile | Foundation | in-progress |
+| 33 | Landing page publique | Foundation | in-progress |
 | 9 | Première course complète | Slice 1 | in-progress |
 | 10 | Simulateur de chauffeurs | Slice 2 | planned |
 | 11 | Distribution par groupes | Slice 3 | in-progress |
@@ -164,6 +165,18 @@ spec [0005](../../specs/_root/0005-retouches-interface-mobile/index.md) · code 
   - [x] Téléphone facultatif, inscription Google et écran de complétion (AC-8 à AC-11)
   - [x] Documents chauffeur : PDF, envoi groupé, bloc refait, back office et expiration (AC-12 à AC-17)
 - [ ] Verify it: `/check verify retouches de l'interface mobile`
+
+### 33. Landing page publique · in-progress
+Une page publique sur `/` qui présente Zay aux clients et aux chauffeurs de Toliara, sert de vitrine pour la démo et pousse vers l'APK Android, en français et en malagasy.
+spec [0007](../../specs/_root/0007-landing-page-web.md) · code in `apps/web/src/routes/index.tsx`, `apps/web/src/components/landing/`, `apps/web/src/lib/landing/`, `apps/web/public/landing/`
+**Done when:** `/` affiche la page rendue côté serveur avec toutes ses sections, le bouton télécharge l'APK (ou affiche « Bientôt disponible »), le bouton FR / MG change toute la page et garde le choix, et `/admin` marche comme avant.
+- [x] Design it (spec): `/architect landing page web`
+- [x] Build it: `/develop landing page publique`
+  - [x] Route `/` rendue côté serveur, couleurs de la page et bouton APK branché sur `VITE_APK_URL` (AC-1, AC-6, AC-11)
+  - [x] Textes français, images et sections, du héros au pied de page (AC-2 à AC-5, AC-9)
+  - [x] Balises de partage, malagasy et bouton FR / MG (AC-7, AC-8, AC-10)
+  - [x] Petit écran, cibles tactiles et textes alternatifs (AC-12)
+- [x] Verify it: `/check verify landing page publique`
 
 ## Slice 1: La course de bout en bout
 
