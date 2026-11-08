@@ -246,6 +246,8 @@ export const fr = {
   "dossier.photoSending": "Envoi de la photo",
   "dossier.photoChange": "Changer la photo",
   "dossier.photoOf": "Photo de {name}",
+  "dossier.vehiclePapersHint":
+    "La carte grise et l'assurance sont celles du véhicule utilisé.",
   "dossier.addVehicle": "Ajouter un véhicule",
   "dossier.capacity": "Capacité",
   "dossier.changesRequested":

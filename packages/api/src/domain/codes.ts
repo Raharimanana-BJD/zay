@@ -75,6 +75,15 @@ export const DRIVER_DOCUMENT_TYPES = [
   "insurance",
 ] as const;
 
+/** These papers belong to a vehicle; the others belong to the driver. */
+export const VEHICLE_DOCUMENT_TYPES = [
+  "vehicle_registration",
+  "insurance",
+] as const satisfies readonly (typeof DRIVER_DOCUMENT_TYPES)[number][];
+
+export const isVehicleDocumentType = (typeCode: string) =>
+  (VEHICLE_DOCUMENT_TYPES as readonly string[]).includes(typeCode);
+
 export const AUDIT_ACTIONS = [
   "account.banned",
   "account.unbanned",

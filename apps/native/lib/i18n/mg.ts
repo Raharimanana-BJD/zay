@@ -244,6 +244,8 @@ export const mg: Record<keyof typeof fr, string> = {
   "dossier.photoSending": "Alefa ny sary",
   "dossier.photoChange": "Hanova ny sary",
   "dossier.photoOf": "Sarin'ny {name}",
+  "dossier.vehiclePapersHint":
+    "Ny karatra fiara sy ny fiantohana dia an'ny fiara ampiasaina.",
   "dossier.addVehicle": "Hanampy fiara",
   "dossier.capacity": "Isan-toerana",
   "dossier.changesRequested":
