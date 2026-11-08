@@ -316,10 +316,11 @@ export function DocumentsBlock({
         // biome-ignore lint/performance/noAwaitInLoops: one file at a time, on purpose
         const storageKey = await uploadFile(file.uri, "doc");
         await trpcClient.driver.attachDocument.mutate({ typeCode, storageKey });
-        // Read the new row first, or the row shows "À envoyer" until the loop ends.
-        await onSent();
-        update(typeCode, undefined);
         sent += 1;
+        // Read the new row first, or the row shows "À envoyer" until the loop ends.
+        // A failed refresh does not undo a piece the server already holds.
+        await onSent().catch(() => undefined);
+        update(typeCode, undefined);
       } catch (error) {
         update(typeCode, {
           ...file,

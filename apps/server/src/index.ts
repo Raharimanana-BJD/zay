@@ -71,6 +71,24 @@ app.get("/files/:key", async (c) => {
   return c.body(file, 200, headers);
 });
 
+const UPLOADS_PER_WINDOW = 30;
+const UPLOAD_WINDOW_MS = 60 * 60 * 1000;
+const uploadsByAccount = new Map<string, number[]>();
+
+/** At most 30 uploads per account and per hour, so one account cannot fill the disk. */
+function takeUploadSlot(userId: string, now: number) {
+  const recent = (uploadsByAccount.get(userId) ?? []).filter(
+    (at) => now - at < UPLOAD_WINDOW_MS
+  );
+  if (recent.length >= UPLOADS_PER_WINDOW) {
+    uploadsByAccount.set(userId, recent);
+    return false;
+  }
+  recent.push(now);
+  uploadsByAccount.set(userId, recent);
+  return true;
+}
+
 const tooLarge = (c: Context) => c.json({ code: "FILE_TOO_LARGE" }, 413);
 
 // Each kind has its own size limit, read before the body is.
@@ -98,6 +116,9 @@ app.post("/files/:kind", uploadLimit, async (c) => {
   }
   if (!(isStaffRole(role) || phone)) {
     return c.json({ code: "PROFILE_INCOMPLETE" }, 403);
+  }
+  if (!takeUploadSlot(id, Date.now())) {
+    return c.json({ code: "TOO_MANY_UPLOADS" }, 429);
   }
   const bytes = new Uint8Array(await c.req.raw.arrayBuffer());
   const key = await storeUpload(bytes, kind, id);

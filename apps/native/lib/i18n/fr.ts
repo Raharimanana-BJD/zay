@@ -307,6 +307,8 @@ export const fr = {
   "errors.DRIVER_NOT_REGISTERED": "Dossier chauffeur introuvable.",
   "errors.DRIVER_UNAVAILABLE": "Ce chauffeur n'est plus disponible.",
   "errors.FILE_TOO_LARGE": "Ce fichier est trop lourd.",
+  "errors.TOO_MANY_UPLOADS":
+    "Trop d'envois en peu de temps. Réessayez dans une heure.",
   "errors.FILE_TYPE_NOT_ALLOWED":
     "Format non accepté. Envoyez une image JPEG ou PNG, ou un PDF pour un document.",
   "errors.generic": "Une erreur est survenue. Réessayez.",
