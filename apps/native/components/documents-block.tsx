@@ -2,24 +2,17 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@zay-app/api/routers/index";
 import * as DocumentPicker from "expo-document-picker";
-import * as ImagePicker from "expo-image-picker";
 import { useToast } from "heroui-native";
 import { useState } from "react";
 import { Image, Modal, Pressable, Text, View } from "react-native";
 
 import { AuthImage } from "@/components/auth-image";
 import { Sheet } from "@/components/sheet";
-import {
-  Action,
-  Group,
-  GroupRow,
-  INK,
-  Muted,
-  Pill,
-  SectionLabel,
-} from "@/components/ui";
+import { SourceChoice } from "@/components/source-choice";
+import { Action, INK, MUTED_INK, Muted, Pill } from "@/components/ui";
 import { daysUntil, formatDay } from "@/lib/format";
 import { type TKey, useI18n } from "@/lib/i18n";
+import { type ImageSource, pickImage } from "@/lib/pick-image";
 import { uploadFile } from "@/lib/upload";
 import { useErrorLabel } from "@/lib/use-action";
 import { trpcClient } from "@/utils/trpc";
@@ -27,9 +20,8 @@ import { trpcClient } from "@/utils/trpc";
 type Dossier = inferRouterOutputs<AppRouter>["driver"]["dossier"];
 type SentDocument = Dossier["documents"][number];
 type TypeCode = Dossier["requiredDocuments"][number];
-type Source = "camera" | "library" | "pdf";
+type Source = ImageSource | "pdf";
 
-const IMAGE_QUALITY = 0.6;
 /** The server's limit for a document (spec 0005, AC-14). */
 const MAX_DOC_BYTES = 10 * 1024 * 1024;
 const EXPIRES_SOON_DAYS = 30;
@@ -54,43 +46,31 @@ type Verification = keyof typeof PILL_TONE;
 const verification = (value: string): Verification =>
   value in PILL_TONE ? (value as Verification) : "pending";
 
-/** Opens the camera, the gallery or the file picker. Null when cancelled. */
-async function pickFile(
-  source: Source
-): Promise<Omit<Prepared, "status"> | null> {
-  if (source === "pdf") {
-    const picked = await DocumentPicker.getDocumentAsync({
-      type: "application/pdf",
-      copyToCacheDirectory: true,
-    });
-    const asset = picked.assets?.[0];
-    if (picked.canceled || !asset) {
-      return null;
-    }
-    if ((asset.size ?? 0) > MAX_DOC_BYTES) {
-      throw new Error("PDF_TOO_LARGE");
-    }
-    return { uri: asset.uri, kind: "pdf", name: asset.name };
-  }
-  const options: ImagePicker.ImagePickerOptions = {
-    mediaTypes: ["images"],
-    quality: IMAGE_QUALITY,
-  };
-  if (source === "camera") {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
-      throw new Error("CAMERA_DENIED");
-    }
-  }
-  const picked =
-    source === "camera"
-      ? await ImagePicker.launchCameraAsync(options)
-      : await ImagePicker.launchImageLibraryAsync(options);
+/** Opens the PDF picker. Null when cancelled. */
+async function pickPdf(): Promise<Omit<Prepared, "status"> | null> {
+  const picked = await DocumentPicker.getDocumentAsync({
+    type: "application/pdf",
+    copyToCacheDirectory: true,
+  });
   const asset = picked.assets?.[0];
   if (picked.canceled || !asset) {
     return null;
   }
-  return { uri: asset.uri, kind: "image", name: asset.fileName ?? "" };
+  if ((asset.size ?? 0) > MAX_DOC_BYTES) {
+    throw new Error("PDF_TOO_LARGE");
+  }
+  return { uri: asset.uri, kind: "pdf", name: asset.name };
+}
+
+/** Opens the camera, the gallery or the PDF picker. Null when cancelled. */
+async function pickFile(
+  source: Source
+): Promise<Omit<Prepared, "status"> | null> {
+  if (source === "pdf") {
+    return await pickPdf();
+  }
+  const image = await pickImage(source);
+  return image ? { ...image, kind: "image" } : null;
 }
 
 function Expiry({ expiresAt }: { expiresAt: string | Date }) {
@@ -109,69 +89,54 @@ function Expiry({ expiresAt }: { expiresAt: string | Date }) {
   );
 }
 
-/** The picture at the left of a row: the chosen file, the sent file, or an icon. */
-function Preview({
+/** The top of a tile: the chosen file, the sent file, or an empty slot. */
+function Thumbnail({
   label,
   prepared,
   sent,
-  onOpen,
 }: {
   label: string;
   prepared?: Prepared;
   sent?: SentDocument;
-  onOpen: (uri: string) => void;
 }) {
-  const { t } = useI18n();
-  const box = "size-14 rounded-2xl bg-surface-tertiary";
+  const box = "h-28 w-full rounded-2xl";
   if (prepared?.kind === "image") {
     return <Image className={box} source={{ uri: prepared.uri }} />;
   }
   if (!prepared && sent?.fileKind === "image" && sent.fileUrl) {
-    const { fileUrl } = sent;
-    return (
-      <Pressable
-        accessibilityLabel={t("dossier.openDocument", { name: label })}
-        accessibilityRole="imagebutton"
-        onPress={() => onOpen(fileUrl)}
-      >
-        <AuthImage className={box} label={label} uri={fileUrl} />
-      </Pressable>
-    );
+    return <AuthImage className={box} label={label} uri={sent.fileUrl} />;
   }
   const isPdf =
     prepared?.kind === "pdf" || (!prepared && sent?.fileKind === "pdf");
-  return (
-    <View className={`${box} items-center justify-center`}>
-      <Ionicons
-        color={INK}
-        name={isPdf ? "document-text" : "document-text-outline"}
-        size={22}
-      />
-      {isPdf ? (
+  if (isPdf) {
+    return (
+      <View
+        className={`${box} items-center justify-center bg-surface-tertiary`}
+      >
+        <Ionicons color={INK} name="document-text" size={26} />
         <Text className="font-black text-[10px] text-foreground">PDF</Text>
-      ) : null}
+      </View>
+    );
+  }
+  return (
+    <View
+      className={`${box} items-center justify-center border border-border border-dashed bg-surface-tertiary`}
+    >
+      <Ionicons color={MUTED_INK} name="add" size={28} />
     </View>
   );
 }
 
-function DocumentRow({
-  label,
+function StatusPill({
   prepared,
   sent,
-  onChoose,
-  onOpen,
 }: {
-  label: string;
   prepared?: Prepared;
   sent?: SentDocument;
-  onChoose: () => void;
-  onOpen: (uri: string) => void;
 }) {
-  const { t, has, locale } = useI18n();
-  const state = sent ? verification(sent.verificationStatus) : null;
-  let status = <Pill label={t("dossier.missing")} tone="neutral" />;
+  const { t } = useI18n();
   if (prepared) {
-    status = (
+    return (
       <Pill
         label={
           prepared.status === "sending"
@@ -181,14 +146,34 @@ function DocumentRow({
         tone="neutral"
       />
     );
-  } else if (state) {
-    status = (
-      <Pill
-        label={t(`verificationShort.${state}` as TKey)}
-        tone={PILL_TONE[state]}
-      />
-    );
   }
+  if (!sent) {
+    return <Pill label={t("dossier.missing")} tone="neutral" />;
+  }
+  const state = verification(sent.verificationStatus);
+  return (
+    <Pill
+      label={t(`verificationShort.${state}` as TKey)}
+      tone={PILL_TONE[state]}
+    />
+  );
+}
+
+/** One paper, as a tile of the grid. A press opens the choice of source. */
+function DocumentTile({
+  label,
+  prepared,
+  sent,
+  onPress,
+}: {
+  label: string;
+  prepared?: Prepared;
+  sent?: SentDocument;
+  onPress: () => void;
+}) {
+  const { t, has, locale } = useI18n();
+  const state = sent ? verification(sent.verificationStatus) : null;
+  const isSending = prepared?.status === "sending";
   const showsReason =
     !prepared &&
     (state === "rejected" || state === "changes_requested") &&
@@ -197,57 +182,48 @@ function DocumentRow({
   const reason = sent?.reasonNote ?? (has(reasonKey) ? t(reasonKey) : null);
 
   return (
-    <View className="gap-3 rounded-3xl bg-surface p-4 shadow-black/5 shadow-sm">
-      <View className="flex-row items-center gap-4">
-        <Preview
-          label={label}
-          onOpen={onOpen}
-          prepared={prepared}
-          sent={sent}
-        />
-        <Pressable
-          accessibilityLabel={t("dossier.change", { name: label })}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: prepared?.status === "sending" }}
-          className="min-h-14 flex-1 flex-row items-center gap-3 active:opacity-70"
-          disabled={prepared?.status === "sending"}
-          onPress={onChoose}
-        >
-          <View className="flex-1 gap-1.5">
-            <Text
-              className="font-bold text-base text-foreground"
-              numberOfLines={2}
-            >
-              {label}
-            </Text>
-            {status}
-          </View>
-          <Ionicons color="#b8b4ab" name="chevron-forward" size={18} />
-        </Pressable>
-      </View>
+    <Pressable
+      accessibilityLabel={t("dossier.change", { name: label })}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isSending }}
+      className="gap-2 rounded-3xl bg-surface p-3 shadow-black/5 shadow-sm active:opacity-80"
+      disabled={isSending}
+      onPress={onPress}
+      style={{ width: "48%" }}
+    >
+      <Thumbnail label={label} prepared={prepared} sent={sent} />
+      <Text
+        className="min-h-10 font-bold text-foreground text-sm"
+        numberOfLines={2}
+      >
+        {label}
+      </Text>
+      <StatusPill prepared={prepared} sent={sent} />
       {prepared?.kind === "pdf" && prepared.name ? (
-        <Muted>{prepared.name}</Muted>
+        <Text className="text-muted text-xs" numberOfLines={1}>
+          {prepared.name}
+        </Text>
       ) : null}
       {!prepared && sent?.fileKind === "pdf" ? (
-        <Muted>
+        <Text className="text-muted text-xs">
           {t("dossier.pdfSentOn", { date: formatDay(sent.sentAt, locale) })}
-        </Muted>
+        </Text>
       ) : null}
       {!prepared && sent?.expiresAt ? (
         <Expiry expiresAt={sent.expiresAt} />
       ) : null}
       {showsReason && reason ? (
-        <Text className="font-medium text-danger text-sm">{reason}</Text>
+        <Text className="font-medium text-danger text-xs">{reason}</Text>
       ) : null}
       {prepared?.error ? (
         <Text
           accessibilityLiveRegion="polite"
-          className="font-medium text-danger text-sm"
+          className="font-medium text-danger text-xs"
         >
           {prepared.error}
         </Text>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 
@@ -275,8 +251,6 @@ export function DocumentsBlock({
   const { requiredDocuments, documents } = dossier;
   const sentOf = (typeCode: TypeCode) =>
     documents.find((doc) => doc.typeCode === typeCode);
-  const sentCount = requiredDocuments.filter((code) => sentOf(code)).length;
-  const total = requiredDocuments.length;
   const readyCodes = requiredDocuments.filter((code) => prepared[code]);
 
   const update = (typeCode: TypeCode, next: Prepared | undefined) =>
@@ -341,33 +315,19 @@ export function DocumentsBlock({
     }
   };
 
+  const choosingSent = choosing ? sentOf(choosing) : undefined;
+  const viewableUrl =
+    choosingSent?.fileKind === "image" ? choosingSent.fileUrl : null;
+
   return (
     <>
-      <SectionLabel>{t("dossier.documents")}</SectionLabel>
-      <View className="gap-2 rounded-3xl bg-surface p-4 shadow-black/5 shadow-sm">
-        <Text className="font-bold text-base text-foreground">
-          {t("dossier.progress", { n: sentCount, total })}
-        </Text>
-        <View
-          accessibilityLabel={t("dossier.progressLabel")}
-          accessibilityRole="progressbar"
-          accessibilityValue={{ min: 0, max: total, now: sentCount }}
-          className="h-2 overflow-hidden rounded-full bg-surface-tertiary"
-        >
-          <View
-            className="h-2 rounded-full bg-brand"
-            style={{ width: `${(sentCount / Math.max(total, 1)) * 100}%` }}
-          />
-        </View>
-        <Muted>{t("dossier.documentsHint")}</Muted>
-      </View>
-      <View className="gap-3">
+      <Muted>{t("dossier.documentsHint")}</Muted>
+      <View className="flex-row flex-wrap justify-between gap-y-3">
         {requiredDocuments.map((typeCode) => (
-          <DocumentRow
+          <DocumentTile
             key={typeCode}
             label={t(`document.${typeCode}` as TKey)}
-            onChoose={() => setChoosing(typeCode)}
-            onOpen={setOpenUri}
+            onPress={() => setChoosing(typeCode)}
             prepared={prepared[typeCode]}
             sent={sentOf(typeCode)}
           />
@@ -386,21 +346,32 @@ export function DocumentsBlock({
         title={choosing ? t(`document.${choosing}` as TKey) : ""}
         visible={choosing !== null}
       >
-        <Group>
-          <GroupRow
-            isFirst
-            label={t("dossier.takePhoto")}
-            onPress={() => choose("camera")}
-          />
-          <GroupRow
-            label={t("dossier.pickImage")}
-            onPress={() => choose("library")}
-          />
-          <GroupRow
-            label={t("dossier.pickPdf")}
-            onPress={() => choose("pdf")}
-          />
-        </Group>
+        <SourceChoice onPick={choose} />
+        <Pressable
+          accessibilityRole="button"
+          className="min-h-12 flex-row items-center justify-center gap-2 active:opacity-70"
+          onPress={() => choose("pdf")}
+        >
+          <Ionicons color={INK} name="document-text-outline" size={18} />
+          <Text className="font-semibold text-base text-foreground underline">
+            {t("source.pdf")}
+          </Text>
+        </Pressable>
+        {viewableUrl ? (
+          <Pressable
+            accessibilityRole="button"
+            className="min-h-12 flex-row items-center justify-center gap-2 active:opacity-70"
+            onPress={() => {
+              setChoosing(null);
+              setOpenUri(viewableUrl);
+            }}
+          >
+            <Ionicons color={INK} name="eye-outline" size={18} />
+            <Text className="font-semibold text-base text-foreground underline">
+              {t("source.view")}
+            </Text>
+          </Pressable>
+        ) : null}
       </Sheet>
 
       <Modal
