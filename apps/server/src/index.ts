@@ -32,6 +32,30 @@ app.use(
   })
 );
 
+// The Expo plugin's proxy redirects to any https address it is given, which
+// makes it an open redirect that Google Safe Browsing flags. Only Google's own
+// sign in page may pass.
+const GOOGLE_AUTHORIZATION_URL = "https://accounts.google.com/o/oauth2/v2/auth";
+
+const isGoogleAuthorizationUrl = (value: string | undefined) => {
+  if (!value) {
+    return false;
+  }
+  try {
+    const url = new URL(value);
+    return `${url.origin}${url.pathname}` === GOOGLE_AUTHORIZATION_URL;
+  } catch {
+    return false;
+  }
+};
+
+app.get("/api/auth/expo-authorization-proxy", async (c, next) => {
+  if (!isGoogleAuthorizationUrl(c.req.query("authorizationURL"))) {
+    return c.json({ code: "INVALID_AUTHORIZATION_URL" }, 400);
+  }
+  await next();
+});
+
 app.on(["POST", "GET"], "/api/auth/*", async (c) => auth.handler(c.req.raw));
 
 app.use(
