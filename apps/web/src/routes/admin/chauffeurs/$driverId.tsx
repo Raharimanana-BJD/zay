@@ -261,6 +261,42 @@ function DocumentViewer({
   );
 }
 
+/** The vehicle as the driver photographed it, so the team can compare it with the papers. */
+function VehiclePhoto({ url, title }: { url: string | null; title: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!url) {
+    return (
+      <p className="rounded-lg border border-dashed p-6 text-center text-muted-foreground text-sm">
+        Pas de photo du véhicule
+      </p>
+    );
+  }
+  if (failed) {
+    return (
+      <p className="text-muted-foreground text-sm" role="alert">
+        Photo indisponible
+      </p>
+    );
+  }
+  return (
+    <a
+      className="block w-full max-w-md overflow-hidden rounded-lg border"
+      href={url}
+      rel="noopener"
+      target="_blank"
+    >
+      <img
+        alt={`Véhicule ${title}`}
+        height={480}
+        className="aspect-[4/3] w-full bg-muted object-cover"
+        onError={() => setFailed(true)}
+        src={url}
+        width={640}
+      />
+    </a>
+  );
+}
+
 function DocumentsTable({
   documents,
   isAdmin,
@@ -414,6 +450,10 @@ function DriverContent({
           title={`${vehicle.make ?? ""} ${vehicle.model}`.trim()}
         >
           <div className="grid grid-cols-1 gap-4">
+            <VehiclePhoto
+              title={`${vehicle.make ?? ""} ${vehicle.model}`.trim()}
+              url={vehicle.photoUrl}
+            />
             <Details
               rows={[
                 {

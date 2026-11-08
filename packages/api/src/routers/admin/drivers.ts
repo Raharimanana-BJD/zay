@@ -196,7 +196,7 @@ export const driversRouter = router({
       if (!row) {
         throw notFound();
       }
-      const vehicles = await ctx.db
+      const vehicleRows = await ctx.db
         .select({
           id: vehicle.id,
           category: vehicle.category,
@@ -205,10 +205,18 @@ export const driversRouter = router({
           registration: vehicle.registration,
           capacity: vehicle.capacity,
           status: vehicle.verificationStatus,
+          photoKey: vehicle.photoKey,
         })
         .from(vehicle)
         .where(and(eq(vehicle.driverId, driverId), isNull(vehicle.archivedAt)))
         .orderBy(desc(vehicle.createdAt));
+      // The team checks the vehicle against its photo, read through `/files`.
+      const vehicles = await Promise.all(
+        vehicleRows.map(async ({ photoKey, ...item }) => {
+          const photo = photoKey ? await ctx.files.getUrl(photoKey) : null;
+          return { ...item, photoUrl: photo?.url ?? null };
+        })
+      );
       const documents = await ctx.db
         .select({
           id: driverDocument.id,

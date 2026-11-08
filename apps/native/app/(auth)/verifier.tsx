@@ -1,12 +1,13 @@
 import { useLocalSearchParams } from "expo-router";
 import { useToast } from "heroui-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { CodeInput, OTP_LENGTH } from "@/components/auth-fields";
 import { AuthShell } from "@/components/auth-shell";
 import { Action, TextLink } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/lib/i18n";
+import { clearPendingVerification } from "@/lib/pending-verification";
 import { useSetRegistering } from "@/lib/registering";
 import { queryClient, trpc, trpcClient } from "@/utils/trpc";
 
@@ -28,6 +29,13 @@ export default function VerifyEmailScreen() {
   const [isInvalid, setIsInvalid] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  // Leaving this screen (back, or the session it opens) ends the wait for a code.
+  useEffect(
+    () => () => {
+      clearPendingVerification();
+    },
+    []
+  );
 
   const verify = async (otp: string) => {
     if (otp.length !== OTP_LENGTH || isChecking) {

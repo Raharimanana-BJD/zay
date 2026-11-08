@@ -4,6 +4,7 @@ import { Image, Text, View } from "react-native";
 import { KeyboardAwareScrollView, SafeAreaView } from "@/components/styled";
 
 import { BackButton, IconBadge, type IconName } from "@/components/ui";
+import { savePendingVerification } from "@/lib/pending-verification";
 
 /** The frame of every sign in screen: back, badge, title, body, then the form. */
 export function AuthShell({
@@ -85,8 +86,10 @@ export function BlobArt({
 }
 
 /** Opens the code screen. A new driver carries the relation chosen at sign up. */
-export const openVerification = (email: string, relation?: string) =>
+export const openVerification = (email: string, relation?: string) => {
+  savePendingVerification({ kind: "verify-email", email, relation });
   router.push({
     pathname: "/verifier",
     params: relation ? { email, relation } : { email },
   });
+};
