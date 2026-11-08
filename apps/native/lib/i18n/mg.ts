@@ -301,6 +301,8 @@ export const mg: Record<keyof typeof fr, string> = {
   "errors.DRIVER_NOT_REGISTERED": "Tsy hita ny antontan-taratasin'ny mpamily.",
   "errors.DRIVER_UNAVAILABLE": "Tsy afaka intsony ity mpamily ity.",
   "errors.FILE_TOO_LARGE": "Mavesatra loatra ity rakitra ity.",
+  "errors.TOO_MANY_UPLOADS":
+    "Be loatra ny rakitra nalefa tao anatin'ny fotoana fohy. Andramo indray afaka adiny iray.",
   "errors.FILE_TYPE_NOT_ALLOWED":
     "Tsy ekena ity endrika ity. Mandefasa sary JPEG na PNG, na PDF ho an'ny antontan-taratasy.",
   "errors.generic": "Nisy olana. Andramo indray.",

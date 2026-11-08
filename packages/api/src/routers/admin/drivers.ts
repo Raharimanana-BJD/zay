@@ -100,7 +100,7 @@ function assertExpiryAllowed(input: {
 function approvedExpiry(day: string | undefined, now: Date) {
   const expiresAt = day ? endOfDay(day) : null;
   if (isExpired({ expiresAt }, now)) {
-    throw conflict(DOCUMENTS_NOT_APPROVED);
+    throw badRequest("EXPIRY_IN_PAST");
   }
   return { expiresAt };
 }

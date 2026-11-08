@@ -76,7 +76,7 @@ function DateField({
   const hintId = useId();
   return (
     <div className="grid gap-2">
-      <Label htmlFor={id}>{label} (facultative)</Label>
+      <Label htmlFor={id}>{label}</Label>
       <Input
         aria-describedby={hint ? hintId : undefined}
         aria-invalid={!isValid}

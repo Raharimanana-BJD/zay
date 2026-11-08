@@ -262,6 +262,8 @@ const ERROR_LABELS: Record<string, string> = {
   CONFLICT: "Cet élément vient de changer. Rechargez la page.",
   DOCUMENTS_NOT_APPROVED:
     "Toutes les pièces doivent être approuvées et valides avant cette décision.",
+  EXPIRY_IN_PAST:
+    "La date d'expiration est déjà passée. Choisissez une date à venir.",
   EMAIL_OR_PHONE_TAKEN: "Cet email ou ce téléphone est déjà utilisé.",
   FORBIDDEN: "Vous n'avez pas accès à cette action.",
   INVALID_EMAIL_OR_PASSWORD: "Email ou mot de passe incorrect.",

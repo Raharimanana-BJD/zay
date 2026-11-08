@@ -155,7 +155,7 @@ function Decisions({
               ? "Laissez vide si la pièce n'expire pas. Elle reste valable jusqu'à la fin de ce jour."
               : undefined
           }
-          dateLabel={isDocument ? "Date d'expiration" : undefined}
+          dateLabel={isDocument ? "Date d'expiration (facultative)" : undefined}
           dateMin={isDocument ? todayIsoDay() : undefined}
           disabled={!canApprove}
           label="Approuver"

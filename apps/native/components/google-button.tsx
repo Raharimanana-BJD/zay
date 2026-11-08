@@ -7,6 +7,8 @@ import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/lib/i18n";
 import { ENV } from "../src/env";
 
+// Better Auth's admin plugin refuses a banned account with the code
+// `BANNED_USER`; the OAuth callback passes it on in `?error=`, in any case.
 const BANNED = /ban/i;
 
 /**
