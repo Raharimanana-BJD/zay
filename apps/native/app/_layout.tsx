@@ -54,9 +54,19 @@ function Routes() {
 
   const [splashGone, setSplashGone] = useState(false);
   const hideSplash = useCallback(() => setSplashGone(true), []);
+  // Better Auth reads the session again each time the app comes back, and while
+  // it does, `isPending` is true again for a signed out person. Waiting on it then
+  // would unmount the navigation and drop the screen in use (an OTP code, a form),
+  // so only the very first read is waited for.
+  const [sessionKnown, setSessionKnown] = useState(false);
+  useEffect(() => {
+    if (!isPending) {
+      setSessionKnown(true);
+    }
+  }, [isPending]);
   const isSignedIn = Boolean(session);
   // At startup the role comes from me.get, so the splash waits for it, unless it fails.
-  const booting = isPending || (isSignedIn && me.isPending && !me.isError);
+  const booting = !sessionKnown || (isSignedIn && me.isPending && !me.isError);
 
   return (
     <>
@@ -64,7 +74,7 @@ function Routes() {
         // Offline, me.get is missing: the server still guards every action.
         isIncomplete={isSignedIn && me.data?.isComplete === false}
         isSignedIn={isSignedIn}
-        isWaiting={splashGone ? isPending : booting}
+        isWaiting={splashGone ? !sessionKnown : booting}
         registering={registering}
         // The server's answer wins. The stored session keeps a ride reachable when offline.
         role={me.data?.role ?? session?.user.role}
