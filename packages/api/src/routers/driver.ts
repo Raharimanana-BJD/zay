@@ -571,7 +571,7 @@ export const driverRouter = router({
     const { db, session } = ctx;
     const driverId = session.user.id;
     const profile = await readProfile(db, driverId);
-    const vehicles = await db
+    const vehicleRows = await db
       .select({
         id: vehicle.id,
         category: vehicle.category,
@@ -585,6 +585,15 @@ export const driverRouter = router({
       .from(vehicle)
       .where(and(eq(vehicle.driverId, driverId), isNull(vehicle.archivedAt)))
       .orderBy(asc(vehicle.createdAt));
+    // The phone shows each vehicle with its photo, read through `/files`.
+    const vehicles = await Promise.all(
+      vehicleRows.map(async (row) => {
+        const photo = row.photoKey
+          ? await ctx.files.getUrl(row.photoKey)
+          : null;
+        return { ...row, photoUrl: photo?.url ?? null };
+      })
+    );
     const currentDocuments = await db
       .select({
         id: driverDocument.id,

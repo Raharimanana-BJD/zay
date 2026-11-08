@@ -1,6 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import * as ImagePicker from "expo-image-picker";
 import { Spinner, useToast } from "heroui-native";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -20,34 +19,15 @@ import {
 } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 import { type Locale, useI18n } from "@/lib/i18n";
+import { type ImageSource, pickImage } from "@/lib/pick-image";
 import { uploadFile } from "@/lib/upload";
 import { useErrorToast } from "@/lib/use-action";
 import { queryClient, trpc, trpcClient } from "@/utils/trpc";
 
-const PHOTO_QUALITY = 0.6;
-
-type PhotoSource = "camera" | "library";
-
 /** Opens the camera or the gallery, cropped to a square. Null when cancelled. */
-async function pickSquarePhoto(source: PhotoSource) {
-  const options: ImagePicker.ImagePickerOptions = {
-    mediaTypes: ["images"],
-    allowsEditing: true,
-    aspect: [1, 1],
-    quality: PHOTO_QUALITY,
-  };
-  if (source === "camera") {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
-      throw new Error("CAMERA_DENIED");
-    }
-  }
-  const picked =
-    source === "camera"
-      ? await ImagePicker.launchCameraAsync(options)
-      : await ImagePicker.launchImageLibraryAsync(options);
-  const asset = picked.assets?.[0];
-  return picked.canceled || !asset ? null : asset.uri;
+async function pickSquarePhoto(source: ImageSource) {
+  const picked = await pickImage(source, { square: true });
+  return picked?.uri ?? null;
 }
 
 export function ProfileScreen() {
@@ -78,7 +58,7 @@ export function ProfileScreen() {
   const showError = useErrorToast();
   const [isPhotoMenuOpen, setIsPhotoMenuOpen] = useState(false);
   const changePhoto = useMutation({
-    mutationFn: async (source: PhotoSource) => {
+    mutationFn: async (source: ImageSource) => {
       const uri = await pickSquarePhoto(source);
       if (uri) {
         const storageKey = await uploadFile(uri, "avatar");
@@ -94,7 +74,7 @@ export function ProfileScreen() {
     onSettled: () => me.refetch(),
   });
   const isSavingPhoto = changePhoto.isPending || removePhoto.isPending;
-  const choosePhoto = (source: PhotoSource) => {
+  const choosePhoto = (source: ImageSource) => {
     setIsPhotoMenuOpen(false);
     changePhoto.mutate(source);
   };
