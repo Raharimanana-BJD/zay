@@ -23,6 +23,13 @@ export default function Index() {
     return <Loading />;
   }
   // Android closed the app while the person read their code: back to the code.
+  if (!session && pending?.kind === "reset-password") {
+    return (
+      <Redirect
+        href={{ pathname: "/mot-de-passe", params: { email: pending.email } }}
+      />
+    );
+  }
   if (!session && pending) {
     return (
       <Redirect

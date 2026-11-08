@@ -1,6 +1,6 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useToast } from "heroui-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import z from "zod";
 
@@ -9,6 +9,10 @@ import { AuthShell } from "@/components/auth-shell";
 import { Action, TextLink } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/lib/i18n";
+import {
+  clearPendingVerification,
+  savePendingVerification,
+} from "@/lib/pending-verification";
 
 const MIN_PASSWORD = 8;
 const OTP_TYPE = "forget-password";
@@ -19,13 +23,30 @@ type Step = "email" | "code" | "password";
 export default function ResetPasswordScreen() {
   const { t } = useI18n();
   const { toast } = useToast();
-  const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
+  // Set when the app reopens on this flow after Android closed it (see index).
+  const resumed = useLocalSearchParams<{ email?: string }>().email;
+  const [step, setStep] = useState<Step>(resumed ? "code" : "email");
+  const [email, setEmail] = useState(resumed ?? "");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string>();
   const [isBusy, setIsBusy] = useState(false);
+
+  // The wait for a code lasts while this flow is on screen, past the email step.
+  useEffect(() => {
+    if (step === "email") {
+      clearPendingVerification();
+    } else {
+      savePendingVerification({ kind: "reset-password", email });
+    }
+  }, [step, email]);
+  useEffect(
+    () => () => {
+      clearPendingVerification();
+    },
+    []
+  );
 
   const fail = (label: string) => toast.show({ variant: "danger", label });
   const codeError = (errorCode?: string) =>

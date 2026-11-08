@@ -87,7 +87,7 @@ export function BlobArt({
 
 /** Opens the code screen. A new driver carries the relation chosen at sign up. */
 export const openVerification = (email: string, relation?: string) => {
-  savePendingVerification({ email, relation });
+  savePendingVerification({ kind: "verify-email", email, relation });
   router.push({
     pathname: "/verifier",
     params: relation ? { email, relation } : { email },
